@@ -1,4 +1,4 @@
-slash_data = function(mu, phi, sigma,
+s_data = function(mu, phi, sigma,
                       b0, b1, b2,
                       y0,
                       v, 
