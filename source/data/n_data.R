@@ -1,4 +1,4 @@
-normal_data = function(mu, phi, sigma,
+n_data = function(mu, phi, sigma,
                        b0, b1, b2,
                        y0, 
                        T,
