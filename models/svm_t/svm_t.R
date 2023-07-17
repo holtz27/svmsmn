@@ -6,6 +6,15 @@ library(patchwork)
 path = 'C:/Users/8936381/Documents/Simulacao/Estudos_Simulacao/ts/ts_model.cpp'
 Rcpp::sourceCpp( path )
 
+source('https://raw.githubusercontent.com/holtz27/svmsmn/main/source/data/t_data.R')
+
+y = ts_data(mu = -1, phi = 0.95, sigma = 0.15,
+            b0 = 0.1, b1 = 0.01, b2 = -0.05,
+            y0 = 0,
+            v = 20,
+            T = 2e3,
+            seed = 42)$y
+
 # Sampling
 # 67092,  N = 5e3: cadeia corre
 # 439675, N = 5e3
