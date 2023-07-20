@@ -1,0 +1,52 @@
+
+L = function( e ){
+  v = exp( e )
+  a_v = 12
+  b_v = .8
+  x = T * ( 0.5 *  v * log(0.5 * v) - log( gamma(0.5 * v) ) ) + 0.5 * v * sum( log(l) - l)
+  x = x + ( a_v - 1 ) * e - b_v * v + e
+  
+  return( x )
+}
+G = function( e ){
+  b_v = .8
+  v = exp( e )
+  x = 0.25 * T * v * v * psigamma(0.5 * v, 1) + b_v * v - 0.5 * T * v
+  
+  return( x )
+}
+H = function( e, p ){
+  x = - L( e ) + 0.5 * log( 2 * pi * G( e ) ) + 0.5 * p * p / G( e )
+  
+  return( x )
+}
+
+e = seq(from = -10, to = 5.845, by = .1)
+p = seq(from = -1000, to = 1000, by = 1)
+z = outer(e, p, FUN = H)
+
+
+contour(e, p, z, xlab = 'e = log(v)', ylab = 'p', nlevels = 25 )
+abline(v = log( v ))
+
+persp(e, p, z, theta = 30, phi = 0, expand = 0.5, col = "lightblue", 
+      xlab = 'e = log(v)', zlab = 'H(e,p)')
+
+
+par( mfrow = c(1, 2) )
+e0 = seq(from = -10, to = 5.845, by = .1)
+h0 = apply(matrix(e0, nrow = 1), MARGIN = 1, FUN = H, p = 0)
+plot(e0, h0, type = 'l')
+abline(v = log( v ))
+p0 = seq(from = -10, to = 10, by = .1)
+h1 = apply(matrix(p0, nrow = 1), MARGIN = 1, FUN = H, e = log( v ))
+plot(p0, h1, type = 'l')
+par( mfrow = c(1, 1) )
+
+
+
+
+
+
+
+
