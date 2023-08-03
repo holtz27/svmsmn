@@ -185,3 +185,44 @@ rmhmc_v = function( e_cur, l, fixp, L, eps, T, acc){
   
   return( list( e = e, acc = acc) )
 }
+
+################################################################################
+source('https://raw.githubusercontent.com/holtz27/svmsmn/main/source/data/t_data.R')
+T = 2e3
+v_true = 20
+e_true = ( 2 / alpha ) * atanh( (2 * v_true - ls - li) / (ls - li) )
+data = t_data(mu = -1, phi = 0.95, sigma = 0.15,
+              b0 = 0.1, b1 = 0.01, b2 = -0.05,
+              y0 = 0,
+              v = v_true,
+              T = T,
+              seed = 42)
+l = data$l
+#l = rgamma(T, shape = 0.5 * v_init, rate = 0.5 * v_init)
+alpha = 2
+li = 2
+ls = 40
+v_init = 18
+e_init = ( 2 / alpha ) * atanh( (2 * v_init - ls - li) / (ls - li) )
+e_init
+
+
+N = 1e3
+chain_e = matrix( ncol = (N + 1) )
+chain_e[ 1 ] = e_init
+acc_e = 0
+
+for(it in 2:(N + 1)){
+  x = rmhmc_v( chain_e[it - 1], l, fixp = 5, L = 4, eps = 0.01, T, acc = 0 )
+  chain_e[ it ] = x$e
+  acc_e = acc_e + x$acc
+}
+
+acc_e / N 
+
+chain_v = 0.5 * ( (ls - li) * tanh( 0.5 * alpha * chain_e ) + (ls + li) )
+par( mfrow = c(1, 2))
+plot( chain_v[1, ], type = 'l' )
+abline( h = v_true )
+acf( chain_v[1, ], lag.max = 100 )
+par( mfrow = c(1, 1)) 
