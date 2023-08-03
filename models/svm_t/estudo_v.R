@@ -8,11 +8,11 @@ b_v = 0.1
 ######## Transformação: T(v) = e                         ############
 ######## e = (2 / alpha) * arctanh((2 * v - ls - li) / (ls - li)), alpha != 0 e li < ls
 #Const. definition
-alpha = .1
-li = 2
-ls = 40
-v_init = 20
-e_init = ( 2 / alpha ) * atanh( (2 * v_init - ls - li) / (ls - li) )
+#alpha = 1
+#li = 2
+#ls = 40
+#v_init = 20
+#e_init = ( 2 / alpha ) * atanh( (2 * v_init - ls - li) / (ls - li) )
 
 logpost_v = function( e, l, T){
   
@@ -183,5 +183,5 @@ rmhmc_v = function( e_cur, l, fixp, L, eps, T, acc){
     e = e + e_cur
   }
   
-  return( e )
+  return( list( e = e, acc = acc) )
 }
