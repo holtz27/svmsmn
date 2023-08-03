@@ -103,7 +103,7 @@ svmsmn_waic = function(data, y0, draws){
   return( waic )
 }
 ############### loo
-svmsmn_loo = function(data, y0, draws, cores){
+svmsmn_loo = function(data, y0, draws, cores = 1){
   
   T = length( data )
   data_past = c( y0, data[1:(T-1)] )
