@@ -1,27 +1,24 @@
 // [[Rcpp::depends( RcppArmadillo )]]
-#include <RcppArmadillo.h>
+//#include <RcppArmadillo.h>
 #include "svm_smn_s.h"
-using namespace Rcpp;
-using namespace arma;
+//using namespace Rcpp;
+//using namespace arma;
 //#############################################################################
-double tgamma(double min, double max, double shape, double scale){
+double rtgamma( double li, double ls, double shape, double scala ){
   
-  Environment pkg = Environment::namespace_env("truncdist");
-  Function f = pkg["rtrunc"];
+  double tg;
   
-  NumericVector x;
-  x = f( 1, Named("spec") = "gamma", 
-         _["a"] = min, _["b"] = max, _["shape"] = shape, _["scale"] = scale);
+  tg = R::pgamma( ls, shape, scala, true, false );
+  tg -= R::pgamma(li, shape, scala, true, false );
+  tg *= R::runif( 0, 1 );
+  tg += R::pgamma(li, shape, scala, true, false );
+  tg = R::qgamma( tg, shape, scala, true, false );
   
-  return x[ 0 ];
-  //return as_scalar( as<arma::vec>( wrap( x ) ) );
-  
+  return tg;
 }
 //########################## l
 vec l_gibbs(double v, vec y_T, vec h, vec b, int T){
   
-  //double v = exp( e );
-  //double v = 0.5 * ( (ls - li) * tanh( 0.5 * alpha * e ) + (ls + li) );
   double b0 = b[0];
   double b1 = tanh( b[1] ); 
   double b2 = b[2];
@@ -30,11 +27,12 @@ vec l_gibbs(double v, vec y_T, vec h, vec b, int T){
   
   vec aux = y_T.subvec( 1, T ) - b0 - b1 * y_T.subvec( 0, T - 1 ) - b2 * exp( h );
   vec u = 0.5 * exp( - h ) % aux % aux;
-  //rtrunc( shape, scale = 1 / rate)
   //scale = 1 / u[ i ] 
   
   for( int i = 0 ; i < T ; i++ ){
-    l_out[ i ] = tgamma( 0.0, 1.0, v + 0.5, 1.0 / as_scalar( u[ i ] ) );
+
+   l_out[ i ] = rtgamma( 0.0, 1.0, v + 0.5, 1.0 / u[ i ] );
+    
   }
   
   return l_out;
@@ -84,10 +82,10 @@ List svm_s(int N,
   b_cur[ 2 ] += -0.025;
   
   // iniciando v
-  double v_cur = 2.0;
+  double v_cur = 5.0;
 
   // iniciando l
-  vec l_cur = zeros<vec>(T, 1);
+  vec l_cur = zeros<vec>(T, 1), aux = zeros<vec>(T, 1), u = zeros<vec>(T, 1);
   for( int k = 0 ; k < T ; k++ ){
     l_cur[ k ] = R::rbeta( v_cur, 1.0 );
   }
@@ -114,9 +112,9 @@ List svm_s(int N,
     theta_cur = rmhmc_theta( theta_cur, h_cur, 5, L_theta, eps_theta, T, acc_theta );
     b_cur = rmhmc_b( b_cur, h_cur, l_cur, 5, L_b, eps_b, T, y_T , acc_b );
     h_cur = hmc_h( h_cur, theta_cur, b_cur, l_cur, L_h, eps_h, T, y_T, acc_h );
-    v_cur = tgamma(1.0, R_PosInf, T + 2.0, 1 / (0.1 - sum( log(l_cur) )) );
+    v_cur = rtgamma( 1.0, R_PosInf, T + 2.0, 1.0 / (0.1 - sum( log(l_cur) )) );
     l_cur = l_gibbs(v_cur, y_T, h_cur, b_cur, T);
-    
+   
     // chain update 
     chain_theta.col( it ) += theta_cur;
     chain_b.col( it ) += b_cur;
