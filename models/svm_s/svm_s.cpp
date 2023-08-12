@@ -4,6 +4,7 @@
 //using namespace Rcpp;
 //using namespace arma;
 //#############################################################################
+//########################## rtgamma
 double rtgamma( double li, double ls, double shape, double scala ){
   
   double tg;
@@ -27,7 +28,7 @@ vec l_gibbs(double v, vec y_T, vec h, vec b, int T){
   
   vec aux = y_T.subvec( 1, T ) - b0 - b1 * y_T.subvec( 0, T - 1 ) - b2 * exp( h );
   vec u = 0.5 * exp( - h ) % aux % aux;
-  //scale = 1 / u[ i ] 
+  //scale = 1 / rate
   
   for( int i = 0 ; i < T ; i++ ){
 
@@ -125,6 +126,11 @@ List svm_s(int N,
     //Progress
     if( (it % a) == 0 ) cout << "Progresso em " << ceil( 100 * it / N ) <<" %"<< endl;
   }
+  
+  // Transformations
+  chain_theta.row( 1 ) = tanh( chain_theta.row( 1 ) );
+  chain_theta.row( 2 ) = exp( chain_theta.row( 2 ) );
+  chain_b.row( 1 )     = tanh( chain_b.row( 1 ) );
   
   List chain = List::create( Named("chain_theta") = chain_theta,
                              Named("chain_b") = chain_b,
