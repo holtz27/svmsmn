@@ -10,13 +10,13 @@ void set_seed( int seed ){
 }
 
 // [[Rcpp::export]]
-List svm_smn_ts(int N, 
-                int L_theta, vec eps_theta, 
-                int L_b, vec eps_b, 
-                int L_h, double eps_h, 
-                int L_v, double eps_v, 
-                vec y_T, 
-                int seed ){
+List svm_t(int N, 
+           int L_theta, vec eps_theta, 
+           int L_b, vec eps_b, 
+           int L_h, double eps_h, 
+           int L_v, double eps_v, double alpha, double li, double ls,
+           vec y_T, 
+           int seed ){
   
   wall_clock timer;
   timer.tic();
@@ -49,15 +49,14 @@ List svm_smn_ts(int N,
   
   // iniciando v
   int acc_v = 0;
-  double v_cur =  randg( distr_param( 12.0, 1.25 ) );
-  v_cur = log( v_cur );
+  double v_cur = 20;
+  v_cur = ( 2 / alpha ) * atanh( (2 * v_cur - ls - li) / (ls - li) );
   
   // iniciando l
   vec l_cur = zeros<vec>(T, 1);
   for( int k = 0 ; k < T ; k++ ){
     //randg( distr_param(a,b) )
-    l_cur[ k ] = randg( distr_param( 0.5 * exp( v_cur ), 
-                                     2 * exp( - v_cur ) ) );
+    l_cur[ k ] = randg( distr_param( 0.5 * 20, 0.1 ) );
   }
   
   // iniciando cadeia
@@ -82,8 +81,8 @@ List svm_smn_ts(int N,
     theta_cur = rmhmc_theta( theta_cur, h_cur, 5, L_theta, eps_theta, T, acc_theta );
     b_cur = rmhmc_b( b_cur, h_cur, l_cur, 5, L_b, eps_b, T, y_T , acc_b );
     h_cur = hmc_h( h_cur, theta_cur, b_cur, l_cur, L_h, eps_h, T, y_T, acc_h );
-    v_cur = rmhmc_v(v_cur, l_cur, 5, L_v, eps_v, T, acc_v );
-    l_cur = l_gibbs(v_cur, y_T, h_cur, b_cur, T);
+    v_cur = rmhmc_v(v_cur, l_cur, 5, L_v, eps_v, T, acc_v, alpha, li, ls );
+    l_cur = l_gibbs(v_cur, y_T, h_cur, b_cur, T, alpha, li, ls );
     
     // chain update 
     chain_theta.col( it ) += theta_cur;
@@ -95,6 +94,13 @@ List svm_smn_ts(int N,
     //Progress
     if( (it % a) == 0 ) cout << "Progresso em " << ceil( 100 * it / N ) <<" %"<< endl;
   }
+  
+  // Transformations
+  chain_theta.row( 1 ) = tanh( chain_theta.row( 1 ) );
+  chain_theta.row( 2 ) = exp( chain_theta.row( 2 ) );
+  chain_b.row( 1 )     = tanh( chain_b.row( 1 ) );
+  // v = 0.5 * ( (ls - li) * tanh( 0.5 * alpha * e ) + (ls + li) )
+  chain_v.row( 0 ) =  0.5 * ( (ls - li) * tanh( 0.5 * alpha * chain_v.row( 0 ) ) + (ls + li) );
   
   List chain = List::create( Named("chain_theta") = chain_theta,
                              Named("chain_b") = chain_b,
@@ -116,4 +122,3 @@ List svm_smn_ts(int N,
   ); 
   
 }
-
