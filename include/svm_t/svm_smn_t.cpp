@@ -1,4 +1,4 @@
-#include "svm_smn_ts.h"
+#include "svm_smn_t.h"
 
 // parameters priori
 double mu_0 = 0.0, s_0 = 3.2;
