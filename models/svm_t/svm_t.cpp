@@ -1,6 +1,6 @@
 // [[Rcpp::depends( RcppArmadillo )]]
 
-#include "svm_smn_ts.h"
+#include "svm_smn_t.h"
 
 // ############################## set seed function
 void set_seed( int seed ){
