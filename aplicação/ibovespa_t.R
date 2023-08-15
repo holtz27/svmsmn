@@ -3,7 +3,7 @@ ibovespa = read.csv('https://raw.githubusercontent.com/holtz27/rbras/main/aplica
 ibovespa = ibovespa[, c('Date', 'Close')]
 ibovespa[, 2] = as.numeric( ibovespa[, 2] ) 
 ibovespa = na.omit(ibovespa)
-ibovespa = tail(ibovespa, n = 4000)
+ibovespa = tail(ibovespa, n = 3992)
 #View(ibovespa)
 T = nrow(ibovespa)
 log.ret = 100 * ( log( ibovespa[2:T, 2] ) - log( ibovespa[1:(T-1), 2] ) ) 
