@@ -33,6 +33,7 @@ abs_plots = function( draws_h, date, y ){
                 axis.text.x = element_text(size = 16),
                 axis.text.y = element_text(size = 18))
   h = h + xlim(as.Date(c(date[1], tail(date, 1) ) ) )
+  h
 }
 
 tail_plot = function(draws, date, model_name){
