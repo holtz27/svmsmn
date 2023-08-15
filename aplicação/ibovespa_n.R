@@ -56,7 +56,7 @@ draws = draws[, jumps ]
 # plots
 trace_plots(draws[1:6, ], 
             names = c('mu', 'phi', 'sigma', 'b0', 'b1', 'b2') )
-abs_plots(draws[7:nrow(draws), ], dates[-1], log.ret)
+abs_plots(chain_h, dates[-1], log.ret)
 ################### Numeric Analysis
 num_analisys(draws[1:6, ], 
              names = c( 'mu', 'phi', 'sigma', 'b0', 'b1', 'b2'),
