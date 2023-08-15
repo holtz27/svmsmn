@@ -20,7 +20,7 @@ num_analisys = function( draws, names, digits ){
       theta_max,
       CD$z,
       IF,
-      mc_error), nrow = 7, byrow = FALSE
+      mc_error), nrow = nrow( draws ), byrow = FALSE
   )
   row.names( data ) = names
   colnames( data ) = c( 'media', 'sd', '2.5%', '97.5%', 'CD', 'IF', 'MC erro')
