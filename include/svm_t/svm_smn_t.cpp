@@ -1,4 +1,4 @@
-#include "svm_smn_t.h"
+#include "svm_smn_ts.h"
 
 // parameters priori
 double mu_0 = 0.0, s_0 = 3.2;
@@ -112,7 +112,11 @@ int G_theta(vec theta, mat &G, mat &inv_G, mat& dG_mu, mat &dG_omega, mat &dG_ga
     G(2, 1) = 2 * phi;
     G(2, 2) = 2 * T + 4 * b_s / ( sigma * sigma );
     
-    if( !G.is_sympd() ) std::cout << theta[0] << " " << theta[1] << " " << theta[2] << std::endl;
+    //if( !G.is_sympd() ) std::cout << "theta" << theta[0] << " " << theta[1] << " " << theta[2] << std::endl;
+    if( !G.is_sympd() ){
+      return -1;
+      //break;
+    }
 
     inv_G = inv_sympd( G );
 
@@ -198,8 +202,13 @@ vec rmhmc_theta(vec theta_cur, vec h, int fixp, int L, vec eps, int T, int &acc)
     mat dG_omega = zeros<mat>(3, 3);
     mat dG_gamma = zeros<mat>(3, 3);
     mat G = zeros<mat>(3, 3);
+    int gcond = 0;
     /****************************************************************/
-    G_theta(theta_cur, G, inv_G, dG_mu, dG_omega, dG_gamma, T);
+    gcond = G_theta(theta_cur, G, inv_G, dG_mu, dG_omega, dG_gamma, T);
+    if( gcond == -1 ){
+      return theta_cur;
+      //break;
+    }
     vec pcur = chol( G ).t() * mvrgaussian( 3 );
     /****************************************************************/
     vec aux = pcur.t() * inv_G * pcur;
@@ -237,8 +246,12 @@ vec rmhmc_theta(vec theta_cur, vec h, int fixp, int L, vec eps, int T, int &acc)
     	}
     
     	/**********************************************************/
-    	G_theta( theta1a, G, inv_G, dG_mu, dG_omega, dG_gamma, T );
-    	gdmom1 = gH_mom( inv_G, pb);
+    	gcond = G_theta( theta1a, G, inv_G, dG_mu, dG_omega, dG_gamma, T );
+    	if( gcond == -1 ){
+        return theta_cur;
+        //break;
+      }
+      gdmom1 = gH_mom( inv_G, pb);
     	gdmom2 = gH_mom( inv_G, pb);
     	/****************************************************/
     	/****thetan+1****************************************/
@@ -246,7 +259,11 @@ vec rmhmc_theta(vec theta_cur, vec h, int fixp, int L, vec eps, int T, int &acc)
     	for( int jfix = 1; jfix < fixp + 1; jfix ++ ){
         
         	theta1b = theta1a + 0.5 * eps % gdmom1 + 0.5 * eps % gdmom2;
-        	G_theta( theta1b, G, inv_G, dG_mu, dG_omega, dG_gamma, T );
+        	gcond = G_theta( theta1b, G, inv_G, dG_mu, dG_omega, dG_gamma, T );
+          if( gcond == -1 ){
+            return theta_cur;
+            //break;
+          }
         	gdmom2 = gH_mom( inv_G, pb );
         
     	}
@@ -359,7 +376,7 @@ int G_b(vec b, vec h, vec l, mat &G, mat &inv_G, mat& dG_b0, mat &dG_delta, mat 
   dG_b0 = zeros<mat>(3, 3);
   dG_delta = zeros<mat>(3, 3);
   dG_b2 = zeros<mat>(3, 3);
-
+  
   G(0, 0) += sum( l % exp( - h ) ) + 1 / ( s_b0 * s_b0 );
   G(2, 2) += sum( l %  exp( h ) ) + 1 / ( s_b2 * s_b2 );
   //G(1, 2) = ( 1 - b1 * b1 ) * sum( l % y_T.subvec(0, T - 1 ) );
@@ -380,7 +397,8 @@ int G_b(vec b, vec h, vec l, mat &G, mat &inv_G, mat& dG_b0, mat &dG_delta, mat 
   G(2, 0) += G(0, 2);
   G(2, 1) = G(1, 2);
 
-  //if( !G.is_sympd() ) std::count << b[0] << " " << b[1] << " " << b[2] << std::endl;
+  //if( !G.is_sympd() ) std::cout << "b" << b[0] << " " << b[1] << " " << b[2] << std::endl;
+  if( !G.is_sympd() ) return -1;
 
   inv_G = inv_sympd( G );
   
@@ -418,8 +436,11 @@ vec rmhmc_b(vec b_cur, vec h, vec l, int fixp, int L, vec eps, int T, vec y_T , 
     mat dG_delta = zeros<mat>(3, 3);
     mat dG_b2 = zeros<mat>(3, 3);
     mat G = zeros<mat>(3, 3);
-    
-    G_b( b_cur, h, l, G, inv_G, dG_b0, dG_delta, dG_b2, T, y_T );
+    int gcond = 0;
+
+    gcond = G_b( b_cur, h, l, G, inv_G, dG_b0, dG_delta, dG_b2, T, y_T );
+    if( gcond == -1 ) return b_cur;
+
     vec pcur = chol( G ).t() * mvrgaussian( 3 );
    
     vec aux = pcur.t() * inv_G * pcur;
@@ -453,13 +474,15 @@ vec rmhmc_b(vec b_cur, vec h, vec l, int fixp, int L, vec eps, int T, vec y_T , 
      		gradHMCth2 = gdpth2 - 0.5 * nuH_b( dG_b0, dG_delta, dG_b2, inv_G, pb);
     	}
     
-    	G_b( theta2a, h, l, G, inv_G, dG_b0, dG_delta, dG_b2, T, y_T);
-    	gdmom1 = gH_mom( inv_G, pb );
+    	gcond = G_b( theta2a, h, l, G, inv_G, dG_b0, dG_delta, dG_b2, T, y_T);
+    	if( gcond == -1 ) return b_cur;
+      gdmom1 = gH_mom( inv_G, pb );
     	gdmom2 = gH_mom( inv_G, pb );
     
     	for(int jfix = 1 ; jfix < fixp + 1 ; jfix++ ){
     		theta2b = theta2a + 0.5 * eps % gdmom1 + 0.5 * eps % gdmom2;
-    		G_b( theta2b, h, l, G, inv_G, dG_b0, dG_delta, dG_b2, T, y_T);
+    		gcond = G_b( theta2b, h, l, G, inv_G, dG_b0, dG_delta, dG_b2, T, y_T);
+        if( gcond ==-1 ) return b_cur;
     		gdmom2 = gH_mom( inv_G, pb );
     	}
     
@@ -572,13 +595,17 @@ int G_v( double e, double &G, double &inv_G, double &dG_v, int T, double alpha, 
   G = 0.0;
   inv_G = 0.0;
   dG_v = 0.0;
-
+  double g = 0;
   //# G  
   double x = 0.5 * T / v - 0.25 * T * R::psigamma(0.5 * v, 1) - (a_v - 1)/ (v * v);
   x += glogjac2_v( v, alpha, li, ls );
   double y = (a_v - 1) / v - b_v + glogjac_v( v, alpha, li, ls );
   //# G = - k0 * k0 * x - k1 * y
   G += - jac_v( v, alpha, li, ls ) * jac_v( v, alpha, li, ls ) * x - jac2_v( v, alpha, li, ls ) * y;   
+  g = - jac_v( v, alpha, li, ls ) * jac_v( v, alpha, li, ls ) * x - jac2_v( v, alpha, li, ls ) * y;
+
+  if( std::isnan( g ) ) return -1;
+  //std::cout << G << std::endl;
   
   //# inv_G
   inv_G += 1 / G;
@@ -609,8 +636,11 @@ double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc
     double inv_G = 0.0;
     double dG_v = 0.0;
     double G = 0.0;
+    int gcond = 0;
+
+    gcond = G_v( e_cur, G, inv_G, dG_v, T, alpha, li, ls );
+    if( gcond == -1 ) return e_cur;
     
-    G_v( e_cur, G, inv_G, dG_v, T, alpha, li, ls );
     double pcur =  G * randn( );
    
     double aux = pcur * inv_G * pcur;
@@ -644,13 +674,16 @@ double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc
      		gradHMCth2 = gdpth2 - 0.5 * nuH_v( dG_v, inv_G, pb);
     	}
     
-    	G_v( theta2a, G, inv_G, dG_v, T, alpha, li, ls );
-    	gdmom1 = gradHmom_v( inv_G, pb );
+    	gcond = G_v( theta2a, G, inv_G, dG_v, T, alpha, li, ls );
+    	if( gcond == -1 ) return e_cur;
+
+      gdmom1 = gradHmom_v( inv_G, pb );
     	gdmom2 = gradHmom_v( inv_G, pb );
     
     	for(int jfix = 1 ; jfix < fixp + 1 ; jfix++ ){
     		theta2b = theta2a + 0.5 * eps * gdmom1 + 0.5 * eps * gdmom2;
-    		G_v( theta2b, G, inv_G, dG_v, T, alpha, li, ls );
+    		gcond = G_v( theta2b, G, inv_G, dG_v, T, alpha, li, ls );
+        if( gcond == -1 ) return e_cur;
     		gdmom2 = gradHmom_v( inv_G, pb );
     	}
     
