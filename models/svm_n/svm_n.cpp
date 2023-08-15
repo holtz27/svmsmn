@@ -73,6 +73,11 @@ List svmn(int N,
     if( (it % a) == 0 ) cout << "Progresso em " << ceil( 100 * it / N ) <<" %"<< endl;
   }
   
+  // Transformations
+  chain_theta.row( 1 ) = tanh( chain_theta.row( 1 ) );
+  chain_theta.row( 2 ) = exp( chain_theta.row( 2 ) );
+  chain_b.row( 1 )     = tanh( chain_b.row( 1 ) );
+  
   List chain = List::create( Named("chain_theta") = chain_theta,
                              Named("chain_b") = chain_b,
                              Named("chain_h") = chain_h );
