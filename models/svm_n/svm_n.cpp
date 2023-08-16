@@ -70,7 +70,7 @@ List svmn(int N,
     chain_h.col( it ) += h_cur;
     
     //Progress
-    if( (it % a) == 0 ) cout << "Progresso em " << ceil( 100 * it / N ) <<" %"<< endl;
+    if( (it % a) == 0 ) Rcout << "Progresso em " << ceil( 100 * it / N ) <<" %"<< endl;
   }
   
   // Transformations
