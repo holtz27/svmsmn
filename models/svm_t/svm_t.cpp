@@ -92,7 +92,7 @@ List svm_t(int N,
     chain_l.col( it ) += l_cur;
     
     //Progress
-    if( (it % a) == 0 ) cout << "Progresso em " << ceil( 100 * it / N ) <<" %"<< endl;
+    if( (it % a) == 0 ) Rcout << "Progresso em " << ceil( 100 * it / N ) <<" %"<< endl;
   }
   
   // Transformations
