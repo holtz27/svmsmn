@@ -39,7 +39,7 @@ abs_plots = function( draws_h, date, y ){
 tail_plot = function(draws, date, model_name){
   library(ggplot2)
   if( !require(latex2exp) ) install.packages("latex2exp")
-  #library(latex2exp)
+  library(latex2exp)
   l_hat = apply(draws, MARGIN = 1, mean)
   df = data.frame(date = date, l = l_hat)
   h = ggplot(df) + geom_line(aes(x=date, y = l)) 
