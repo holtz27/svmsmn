@@ -49,6 +49,6 @@ tail_plot = function(draws, date, model_name){
   h = h + theme(axis.title.y = element_text(size = 18),
                 axis.text.x = element_text(size = 14),
                 axis.text.y = element_text(size = 14))
-  h = h + xlim(as.Date(c(date[1], tail(date, 1) ) ) )
+  #h = h + xlim(as.Date(c(date[1], tail(date, 1) ) ) )
   h
 }
