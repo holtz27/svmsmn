@@ -7,7 +7,7 @@ source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/figures.R'
 source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/data/s_data.R' )
 source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/model.selection.R' )
 
-data = s_data(mu = -1, phi = 0.95, sigma = 0.15,
+data = s_data(mu = -1, phi = 0.975, sigma = 0.15,
               b0 = 0.1, b1 = 0.01, b2 = -0.05,
               y0 = 0,
               v = 2,
@@ -22,7 +22,7 @@ path = 'C:/Users/8936381/Documents/svm_smn/Simulacao/Estudos_Simulacao/slash/svm
 Rcpp::sourceCpp( path )
 
 # Sampling
-N = 2e3
+N = 5e4
 samples = svm_s(N,
                 L_theta = 20, eps_theta = c( 0.5, 0.5, 0.5 ), 
                 L_b = 20, eps_b = c( 0.1, 0.1, 0.1 ), 
@@ -39,10 +39,6 @@ chain_b = samples$chain$chain_b
 chain_h = samples$chain$chain_h
 chain_v = samples$chain$chain_v
 chain_l = samples$chain$chain_l
-# Transformations
-chain_theta[2, ] = tanh( chain_theta[2, ] )
-chain_theta[3, ] = exp(  chain_theta[3, ] )
-chain_b[2, ]     = tanh( chain_b[2, ] )
 # draws
 draws = matrix(c( chain_theta[1, ],
                   chain_theta[2, ],
@@ -57,13 +53,14 @@ draws = rbind( draws, chain_l )
 ############################### Convergence analysis
 ################### Trace plots
 ### burn
-burn = 5e3
+burn = 1e3
 draws = draws[, -c( 1:burn )]
-lags = 2
+lags = 20
 jumps = seq(1, N - burn, by = lags)
 draws = draws[, jumps ]
 trace_plots(draws[1:7, ], 
             names = c('mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v') )
+tail_plot(chain_l, 1:T, 'S')
 ################### Numeric Analysis
 num_analisys(draws[1:7, ], 
              names = c( 'mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v'),
@@ -191,20 +188,6 @@ mc_error_h = round( apply( chain_h,
                            MARGIN = 1, 
                            FUN = sd) / sqrt( N_eff_h ), 
                     5 )
-# other plots
-e.vol_hat = apply( exp( chain_h ), MARGIN = 1, FUN = mean )
-e.vol_min = apply( exp( chain_h ), MARGIN = 1, FUN = quantile, probs = c(0.025) )
-e.vol_max = apply( exp( chain_h ), MARGIN = 1, FUN = quantile, probs = c(0.975) )
-data = matrix(c(1:T, abs(y), e.vol_hat, e.vol_min, e.vol_max), ncol = 5)
-data = data.frame(data)
-names(data) = c('obs', 'y.abs', 'e.hat', 'e.min','e.max')
-h = ggplot(data)
-h = h + geom_line(aes(obs, y.abs), color = 'grey70')
-h = h + geom_ribbon(aes(x = 1:T, ymax = e.vol_max, ymin = e.vol_min), 
-                    fill = 'blue' ,alpha = 0.2)
-h = h + geom_line(aes(obs, e.hat), linewidth = 0.75)
-h = h + theme_test() + xlab('Tempo') + ylab('|retornos|')
-h
 # convergence plots
 par( mfrow = c(1,3) )
 plot( CD_h$z, main = 'Geweke diagnostic', xlab = '', ylab = '' )
