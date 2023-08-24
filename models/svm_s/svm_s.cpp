@@ -1,21 +1,37 @@
 // [[Rcpp::depends( RcppArmadillo )]]
-//#include <RcppArmadillo.h>
+
 #include "svm_smn_s.h"
-//using namespace Rcpp;
-//using namespace arma;
+
+/*
+double rtgamma( double li, double ls, double shape, double scala ){
+ 
+ double tg;
+ 
+ tg = R::pgamma( ls, shape, scala, true, false );
+ tg -= R::pgamma(li, shape, scala, true, false );
+ tg *= R::runif( 0, 1 );
+ tg += R::pgamma(li, shape, scala, true, false );
+ tg = R::qgamma( tg, shape, scala, true, false );
+ 
+ return tg;
+}
+ */
 //#############################################################################
 //########################## rtgamma
-double rtgamma( double li, double ls, double shape, double scala ){
+double rtgamma( double min, double max, double shape, double scale ){
   
-  double tg;
+  Environment pkg = Environment::namespace_env("truncdist");
+  Function f = pkg["rtrunc"];
   
-  tg = R::pgamma( ls, shape, scala, true, false );
-  tg -= R::pgamma(li, shape, scala, true, false );
-  tg *= R::runif( 0, 1 );
-  tg += R::pgamma(li, shape, scala, true, false );
-  tg = R::qgamma( tg, shape, scala, true, false );
+  NumericVector x;
+  x = f( 1, 
+         Named("spec") = "gamma", 
+         _["a"] = min, 
+         _["b"] = max, 
+         _["shape"] = shape, 
+         _["scale"] = scale);
   
-  return tg;
+  return x[ 0 ];
 }
 //########################## l
 vec l_gibbs(double v, vec y_T, vec h, vec b, int T){
@@ -28,7 +44,7 @@ vec l_gibbs(double v, vec y_T, vec h, vec b, int T){
   
   vec aux = y_T.subvec( 1, T ) - b0 - b1 * y_T.subvec( 0, T - 1 ) - b2 * exp( h );
   vec u = 0.5 * exp( - h ) % aux % aux;
-  //scale = 1 / rate
+  // scale = 1 / rate
   
   for( int i = 0 ; i < T ; i++ ){
 
@@ -124,7 +140,7 @@ List svm_s(int N,
     chain_l.col( it ) += l_cur;
     
     //Progress
-    if( (it % a) == 0 ) Rcout << "Progresso em " << ceil( 100 * it / N ) <<" %"<< endl;
+    if( (it % a) == 0 ) cout << "Progresso em " << ceil( 100 * it / N ) <<" %"<< endl;
   }
   
   // Transformations
