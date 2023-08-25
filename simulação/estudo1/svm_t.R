@@ -84,7 +84,7 @@ for( i in 1:length(alphas) ){
     vies[ , it ] = resultados[[ it ]][ , 1] - theta
     smse[ , it ] = vies[ , it ] ** 2
     
-    cat( '\r' )
+    cat( '\n' )
     
     if( it == n_rep ){
       # metrics calculation
@@ -102,7 +102,6 @@ for( i in 1:length(alphas) ){
     } 
   }
 }
-
 
 time 
 round( sumario, 4 )
