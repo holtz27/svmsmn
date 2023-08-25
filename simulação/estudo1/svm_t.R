@@ -3,7 +3,7 @@
 source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/num_analisys.R' )
 source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/data/t_data.R' )
 # getwd()
-path = 'svm_smn/Simulacao/Estudos_Simulacao/ts/svm_t.cpp'
+path = 'svm_t/svm_t.cpp'
 Rcpp::sourceCpp( path )
 
 # N° réplicas
@@ -24,16 +24,15 @@ theta = c(mu = 1.0,
           b1 = 0.01,
           b2 = -0.05,
           v = 20
-        )
+)
 T = 1e3
-
 # mcmc setting
 N = 5e3
 burn = 1e3
 lags = 20
-
+alphas = c( 0.01, 0.1, 0.2 )
 # sampling
-for( alpha in c(0.01, 0.2) ){
+for( i in 1:length(alphas) ){
   for( it in 1:n_rep ){
     if( it == 1 ) time = Sys.time()
     #data
@@ -45,7 +44,7 @@ for( alpha in c(0.01, 0.2) ){
                   seed = seeds[ it ] )
     y = data$y
     
-    cat( paste0('réplica: ', it, '; ', 'alpha: ', alpha,'\n' ) )
+    cat( paste0('réplica: ', it, '; ', 'alpha: ', alphas[ i ],'\n' ) )
     
     # Sampling
     #N = 
@@ -53,7 +52,7 @@ for( alpha in c(0.01, 0.2) ){
                     L_theta = 20, eps_theta = c( 0.5, 0.5, 0.5 ), 
                     L_b = 20, eps_b = c( 0.1, 0.1, 0.1 ), 
                     L_h = 50, eps_h = 0.015,
-                    L_v = 10, eps_v = 0.5, alpha = alpha, li = 2, ls = 40,
+                    L_v = 10, eps_v = 0.5, alpha = alphas[ i ], li = 2, ls = 40,
                     y_T = c(0, y), 
                     seed = 0 )
     chain_theta = samples$chain$chain_theta
@@ -94,7 +93,8 @@ for( alpha in c(0.01, 0.2) ){
       Smse = sqrt( Smse )
       # summary
       data = matrix( c(Vies, Smse), ncol = 2 )
-      data = cbind( data , rep(1, 7))
+      #data = as.data.frame( data )
+      data = cbind( data , rep(alphas[ i ], 7))
       row.names( data ) = names = c( 'mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v')
       colnames( data ) = c( 'vies', 'smse', 'alpha' )
       sumario = cbind( sumario, data )
@@ -106,4 +106,3 @@ for( alpha in c(0.01, 0.2) ){
 
 time 
 round( sumario, 4 )
-
