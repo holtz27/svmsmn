@@ -1,6 +1,6 @@
 // [[Rcpp::depends( RcppArmadillo )]]
 
-#include "svm_smn_s.h"
+#include "svm_smn_t.h"
 
 /*
 double rtgamma( double li, double ls, double shape, double scala ){
