@@ -7,14 +7,14 @@ path = 'svm_smn/Simulacao/Estudos_Simulacao/ts/svm_t.cpp'
 Rcpp::sourceCpp( path )
 
 # N° réplicas
-n_rep = 2
+n_rep = 3
 vies = smse = matrix(nrow = 7, ncol = n_rep)
 # Set semente
 seed = 8936381
 nseeds = n_rep
 set.seed( seed )
 seeds = sample(1:1e6, nseeds)
-resultados = list( )
+
 sumario = NULL
 # data setting
 theta = c(mu = 1.0,
@@ -26,7 +26,8 @@ theta = c(mu = 1.0,
           v = 20
         )
 T = 1e2
-alpha = c(0.01, 0.2)
+alpha = c(0.01, 0.2, 1.0)
+resultados = list( )
 # mcmc setting
 N = 5e2
 burn = 1e2
@@ -77,13 +78,13 @@ for( k in 1:length( alpha ) ){
     jumps = seq(1, N - burn, by = lags)
     draws = draws[, jumps ]
     ################### Numeric Analysis
-    resultados[[ it ]] = num_analisys(draws, 
+    resultados[[ (k - 1) * n_rep + it ]] = num_analisys(draws, 
                                       names = c( 'mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v'),
                                       digits = 4 )
-    vies[ , it ] = resultados[[ it ]][ , 1] - theta
+    vies[ , it ] = resultados[[ (k - 1) * n_rep + it ]][ , 1] - theta
     smse[ , it ] = vies[ , it ] ** 2
     
-    cat( '\n' )
+    cat( (k - 1) * n_rep + it,'\n' )
     
     if( it == n_rep ){
       # metrics calculation
@@ -103,4 +104,4 @@ for( k in 1:length( alpha ) ){
 
 time 
 round( sumario, 4 )
-
+resultados
