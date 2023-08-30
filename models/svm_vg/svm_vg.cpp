@@ -14,16 +14,19 @@ vec l_gibbs(double e, vec y_T, vec h, vec b, int T, double alpha, double li, dou
   double b2 = b[2];
   
   NumericVector x;
-  vec l_out(T);
+  vec l_out( T );
   
   vec mu_t = y_T.subvec(1, T) - b0 - b1 * y_T.subvec(0, T - 1) - b2 * exp( h );
   vec chi = exp( -h ) % mu_t % mu_t;
   
+  //Rcout << h << endl;
+  //Rcout << mu_t << endl;
+  
   for(int i = 0 ; i < T; i++){
     x = f(Named("n") = 1, 
           Named("lambda") = 0.5 * (1 - v), 
-          _["chi"] = chi[ i ], 
-          _["psi"] = v);
+          _["chi"] = v, 
+          _["psi"] = chi[ i ]);
     l_out[ i ] = x[ 0 ];
   }
   
@@ -43,6 +46,7 @@ List svm_vg(int N,
            int L_h, double eps_h,
            int L_v, double eps_v,
            double alpha, double li, double ls,
+           vec l,
            vec y_T, 
            int seed ){
   
@@ -76,12 +80,18 @@ List svm_vg(int N,
   b_cur[ 2 ] += -0.025;
   
   // iniciando v
-  // e  = (2 / alpha) * atanh((2 * v - ls - li) / (ls - li))
   int acc_v = 0;
-  double v_cur = 0;
+  double v_cur = R::rgamma( 2.0, 1 / 0.1 );
   
   // iniciando l
-  vec l_cur = ones<vec>(T, 1);
+  vec l_cur = l;
+  
+  //for(int i = 0; i < T; i++){
+  //  l_cur[ i ] = 1 / R::rgamma( 0.5 * v_cur, 2.0 / v_cur );
+  //}
+  
+  // e  = (2 / alpha) * atanh((2 * v - ls - li) / (ls - li))
+  v_cur = (2 / alpha) * atanh((2 * v_cur - ls - li) / (ls - li));
   
   // iniciando cadeia
   mat chain_theta = zeros<mat>( 3, N + 1 );
@@ -106,7 +116,7 @@ List svm_vg(int N,
     b_cur = rmhmc_b( b_cur, h_cur, l_cur, 5, L_b, eps_b, T, y_T , acc_b );
     h_cur = hmc_h( h_cur, theta_cur, b_cur, l_cur, L_h, eps_h, T, y_T, acc_h );
     v_cur = rmhmc_v(v_cur, l_cur, 5, L_v, eps_v, T, acc_v, alpha, li, ls );
-    l_cur = l_gibbs(v_cur, y_T, h_cur, b_cur, T, alpha, li, ls);
+    //l_cur = l_gibbs(v_cur, y_T, h_cur, b_cur, T, alpha, li, ls);
     
     // chain update 
     chain_theta.col( it ) += theta_cur;
@@ -116,7 +126,7 @@ List svm_vg(int N,
     chain_l.col( it ) += l_cur;
     
     //Progress
-    if( (it % a) == 0 ) cout << "Progresso em " << ceil( 100 * it / N ) <<" %"<< endl;
+    if( (it % a) == 0 ) Rcout << "Progresso em " << ceil( 100 * it / N ) <<" %"<< endl;
   }
   
   // Transformations
@@ -125,7 +135,6 @@ List svm_vg(int N,
   chain_b.row( 1 )     = tanh( chain_b.row( 1 ) );
   // v = 0.5 * ( (ls - li) * tanh( 0.5 * alpha * e ) + (ls + li) )
   chain_v.row( 0 ) =  0.5 * ( (ls - li) * tanh( 0.5 * alpha * chain_v.row( 0 ) ) + (ls + li) );
-  
   
   List chain = List::create( Named("chain_theta") = chain_theta,
                              Named("chain_b") = chain_b,
