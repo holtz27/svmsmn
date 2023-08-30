@@ -84,11 +84,10 @@ List svm_vg(int N,
   double v_cur = R::rgamma( 2.0, 1 / 0.1 );
   
   // iniciando l
-  vec l_cur = l;
-  
-  //for(int i = 0; i < T; i++){
-  //  l_cur[ i ] = 1 / R::rgamma( 0.5 * v_cur, 2.0 / v_cur );
-  //}
+  vec l_cur = zeros<vec>(T, 1);  
+  for(int i = 0; i < T; i++){
+    l_cur[ i ] = 1 / R::rgamma( 0.5 * v_cur, 2.0 / v_cur );
+  }
   
   // e  = (2 / alpha) * atanh((2 * v - ls - li) / (ls - li))
   v_cur = (2 / alpha) * atanh((2 * v_cur - ls - li) / (ls - li));
@@ -116,7 +115,7 @@ List svm_vg(int N,
     b_cur = rmhmc_b( b_cur, h_cur, l_cur, 5, L_b, eps_b, T, y_T , acc_b );
     h_cur = hmc_h( h_cur, theta_cur, b_cur, l_cur, L_h, eps_h, T, y_T, acc_h );
     v_cur = rmhmc_v(v_cur, l_cur, 5, L_v, eps_v, T, acc_v, alpha, li, ls );
-    //l_cur = l_gibbs(v_cur, y_T, h_cur, b_cur, T, alpha, li, ls);
+    l_cur = l_gibbs(v_cur, y_T, h_cur, b_cur, T, alpha, li, ls);
     
     // chain update 
     chain_theta.col( it ) += theta_cur;
