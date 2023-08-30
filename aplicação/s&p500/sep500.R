@@ -1,7 +1,7 @@
 #Banco coletado em: 
 #https://br.investing.com/indices/
 # getwd()
-sep500 = read.csv('svm_smn/Aplicação/S&P500/S&P500.csv')
+sep500 = read.csv('https://raw.githubusercontent.com/holtz27/svmsmn/main/aplica%C3%A7%C3%A3o/s%26p500/SeP500.csv')
 sep500 = sep500[, c('Data', 'Último')]
 sep500[, 2] = stringr::str_remove(sep500[, 2], "[.]")
 sep500[, 2] = stringr::str_replace(sep500[, 2], "[,]", ".")
