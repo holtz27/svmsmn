@@ -1,6 +1,6 @@
 # Reading data
 #ibovespa = read.csv('https://raw.githubusercontent.com/holtz27/rbras/main/aplica%C3%A7%C3%B5es/%5EBVSP.csv')
-merval = read.csv('svm_smn/Aplicação/merval/Merval.csv')
+merval = read.csv('https://raw.githubusercontent.com/holtz27/svmsmn/main/aplica%C3%A7%C3%A3o/merval/Merval.csv')
 merval = merval[, c('Data', 'Último')]
 merval[, 2] = stringr::str_remove(merval[, 2], "[.]")
 merval[, 2] = stringr::str_replace(merval[, 2], "[,]", ".")
