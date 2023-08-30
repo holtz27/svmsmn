@@ -1,7 +1,7 @@
 #Banco coletado em: 
 #https://br.investing.com/indices/
 # getwd()
-sepLima = read.csv('svm_smn/Aplicação/S&PLima/S&PLimaGeneral.csv')
+sepLima = read.csv('https://raw.githubusercontent.com/holtz27/svmsmn/main/aplica%C3%A7%C3%A3o/SePLimaGeneral/SePLimaGeneral.csv')
 sepLima = sepLima[, c('Data', 'Último')]
 sepLima[, 2] = stringr::str_remove(sepLima[, 2], "[.]")
 sepLima[, 2] = stringr::str_replace(sepLima[, 2], "[,]", ".")
