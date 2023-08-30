@@ -17,16 +17,13 @@ vec l_gibbs(double e, vec y_T, vec h, vec b, int T, double alpha, double li, dou
   vec l_out( T );
   
   vec mu_t = y_T.subvec(1, T) - b0 - b1 * y_T.subvec(0, T - 1) - b2 * exp( h );
-  vec chi = exp( -h ) % mu_t % mu_t;
-  
-  //Rcout << h << endl;
-  //Rcout << mu_t << endl;
+  vec psi = exp( -h ) % mu_t % mu_t;
   
   for(int i = 0 ; i < T; i++){
     x = f(Named("n") = 1, 
           Named("lambda") = 0.5 * (1 - v), 
           _["chi"] = v, 
-          _["psi"] = chi[ i ]);
+          _["psi"] = psi[ i ]);
     l_out[ i ] = x[ 0 ];
   }
   
@@ -46,7 +43,6 @@ List svm_vg(int N,
            int L_h, double eps_h,
            int L_v, double eps_v,
            double alpha, double li, double ls,
-           vec l,
            vec y_T, 
            int seed ){
   
@@ -84,7 +80,7 @@ List svm_vg(int N,
   double v_cur = R::rgamma( 2.0, 1 / 0.1 );
   
   // iniciando l
-  vec l_cur = zeros<vec>(T, 1);  
+  vec l_cur = zeros<vec>(T, 1);
   for(int i = 0; i < T; i++){
     l_cur[ i ] = 1 / R::rgamma( 0.5 * v_cur, 2.0 / v_cur );
   }
