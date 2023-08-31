@@ -1,8 +1,11 @@
 num_analisys = function( draws, burn = 0, lags = 1, names, digits ){
   if( !require(coda) ) install.packages("coda")
   ############### Numeric Analysis
+  Draws = draws[, -c( 1:burn )]
+  jumps = seq(1, N - burn, by = lags)
+  Draws = Draws[, jumps ]
   
-  chain = coda::as.mcmc( t( draws ) )
+  chain = coda::as.mcmc( t( dDaws ) )
   CD = coda::geweke.diag( chain )
   N_eff = coda::effectiveSize( chain )
   IF = ncol( draws ) / N_eff
@@ -21,7 +24,7 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits ){
       theta_max,
       CD$z,
       IF,
-      mc_error), nrow = nrow( draws ), byrow = FALSE
+      mc_error), nrow = nrow( Draws ), byrow = FALSE
   )
   row.names( data ) = names
   colnames( data ) = c( 'media', 'sd', '2.5%', '97.5%', 'CD', 'IF', 'MC erro')
