@@ -1,6 +1,7 @@
 num_analisys = function( draws, burn = 0, lags = 1, names, digits ){
   if( !require(coda) ) install.packages("coda")
   ############### Numeric Analysis
+  N = ncol( draws )
   Draws = draws[, -c( 1:burn )]
   jumps = seq(1, N - burn, by = lags)
   Draws = Draws[, jumps ]
