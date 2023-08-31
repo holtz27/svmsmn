@@ -5,7 +5,7 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits ){
   jumps = seq(1, N - burn, by = lags)
   Draws = Draws[, jumps ]
   
-  chain = coda::as.mcmc( t( dDaws ) )
+  chain = coda::as.mcmc( t( Draws ) )
   CD = coda::geweke.diag( chain )
   N_eff = coda::effectiveSize( chain )
   IF = ncol( draws ) / N_eff
