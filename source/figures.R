@@ -1,4 +1,5 @@
 trace_plots = function(draws, burn = 0, lags = 1, names){
+  N = ncol( draws )
   Draws = draws[, -c( 1:burn )]
   jumps = seq(1, N - burn, by = lags)
   Draws = Draws[, jumps ]
