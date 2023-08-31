@@ -1,17 +1,17 @@
 trace_plots = function(draws, burn = 0, lags = 1, names){
-  draws = draws[, -c( 1:burn )]
+  Draws = draws[, -c( 1:burn )]
   jumps = seq(1, N - burn, by = lags)
-  draws = draws[, jumps ]
+  Draws = Draws[, jumps ]
   
-  n = nrow( draws )
+  n = nrow( Draws )
   par(mfrow = c(1,1))
   mat = matrix(seq(1, 3 * n), nrow = 3, byrow = FALSE)
   layout( mat )
   
   for(i in 1:n){
-    plot( draws[i, ], type = 'l', main = names[i], xlab = '', ylab = '')
-    plot(acf( draws[i, ], lag.max = 100, plot = FALSE)[1:100], main ='', xlab = '', ylab = 'ACF')
-    plot(density( draws[i, ] ), main ='', xlab = '', ylab = '')
+    plot( Draws[i, ], type = 'l', main = names[i], xlab = '', ylab = '')
+    plot(acf( Draws[i, ], lag.max = 100, plot = FALSE)[1:100], main ='', xlab = '', ylab = 'ACF')
+    plot(density( Draws[i, ] ), main ='', xlab = '', ylab = '')
   }
   
   par(mfrow = c(1,1))
