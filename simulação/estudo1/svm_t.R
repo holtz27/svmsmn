@@ -7,7 +7,7 @@ path = 'svm_smn/Simulacao/Estudos_Simulacao/ts/svm_t.cpp'
 Rcpp::sourceCpp( path )
 
 # N° réplicas
-n_rep = 3
+n_rep = 1
 vies = smse = matrix(nrow = 7, ncol = n_rep)
 # Set semente
 seed = 8936381
@@ -48,39 +48,46 @@ for( k in 1:length( alpha ) ){
     
     cat( paste0('réplica: ', it, '; ', 'alpha: ', alpha[ k ],'\n' ) )
     
-    # Sampling
-    #N = 
-    samples = svm_t(N,
-                    L_theta = 20, eps_theta = c( 0.5, 0.5, 0.5 ), 
-                    L_b = 20, eps_b = c( 0.1, 0.1, 0.1 ), 
-                    L_h = 50, eps_h = 0.015,
-                    L_v = 10, eps_v = 0.5, alpha = alpha[ k ], li = 2, ls = 40,
-                    y_T = c(0, y), 
-                    seed = 0 )
-    chain_theta = samples$chain$chain_theta
-    chain_b = samples$chain$chain_b
-    chain_v = samples$chain$chain_v
-    # draws
-    draws = matrix(c( chain_theta[1, ],
-                      chain_theta[2, ],
-                      chain_theta[3, ],
-                      chain_b[1, ],
-                      chain_b[2, ],
-                      chain_b[3, ],
-                      chain_v
-    ), nrow = 7, byrow = TRUE)
-    ############################### Convergence analysis
-    ################### Trace plots
-    ### burn
-    #burn = 1e1
-    draws = draws[, -c( 1:burn )]
-    #lags = 2
-    jumps = seq(1, N - burn, by = lags)
-    draws = draws[, jumps ]
+    repeat{
+      # Sampling
+      samples = svm_t(N,
+                      L_theta = 20, eps_theta = c( 0.5, 0.5, 0.5 ), 
+                      L_b = 20, eps_b = c( 0.1, 0.1, 0.1 ), 
+                      L_h = 50, eps_h = 0.015,
+                      L_v = 10, eps_v = 0.5, alpha = alpha[ k ], li = 2, ls = 40,
+                      y_T = c(0, y), 
+                      seed = 0 )
+      chain_theta = samples$chain$chain_theta
+      chain_b = samples$chain$chain_b
+      chain_v = samples$chain$chain_v
+      # draws
+      draws = matrix(c( chain_theta[1, ],
+                        chain_theta[2, ],
+                        chain_theta[3, ],
+                        chain_b[1, ],
+                        chain_b[2, ],
+                        chain_b[3, ],
+                        chain_v
+      ), nrow = 7, byrow = TRUE)
+      ############################### Convergence analysis
+      ################### Trace plots
+      ### burn
+      #burn = 1e1
+      draws = draws[, -c( 1:burn )]
+      #lags = 2
+      jumps = seq(1, N - burn, by = lags)
+      draws = draws[, jumps ]
+      
+      x = apply(draws, MARGIN = 1, FUN = mean)
+      if( sum( x ) < Inf ) break
+    }
+    
+    #resultados[[ (k - 1) * n_rep + it ]] = x
+    
     ################### Numeric Analysis
     resultados[[ (k - 1) * n_rep + it ]] = num_analisys(draws, 
-                                      names = c( 'mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v'),
-                                      digits = 4 )
+                                                        names = c( 'mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v'),
+                                                        digits = 4 )
     vies[ , it ] = resultados[[ (k - 1) * n_rep + it ]][ , 1] - theta
     smse[ , it ] = vies[ , it ] ** 2
     
