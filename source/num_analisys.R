@@ -8,7 +8,7 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits ){
   chain = coda::as.mcmc( t( Draws ) )
   CD = coda::geweke.diag( chain )
   N_eff = coda::effectiveSize( chain )
-  IF = ncol( draws ) / N_eff
+  IF = ncol( Draws ) / N_eff
   mc_error = apply( chain, 
                     MARGIN = 2, 
                     FUN = sd) / sqrt( N_eff )
