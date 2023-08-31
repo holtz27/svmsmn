@@ -1,6 +1,7 @@
-num_analisys = function( draws, names, digits ){
+num_analisys = function( draws, burn = 0, lags = 1, names, digits ){
   if( !require(coda) ) install.packages("coda")
   ############### Numeric Analysis
+  
   chain = coda::as.mcmc( t( draws ) )
   CD = coda::geweke.diag( chain )
   N_eff = coda::effectiveSize( chain )
