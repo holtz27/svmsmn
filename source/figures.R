@@ -1,4 +1,8 @@
-trace_plots = function(draws, names){
+trace_plots = function(draws, burn = 0, lags = 1, names){
+  draws = draws[, -c( 1:burn )]
+  jumps = seq(1, N - burn, by = lags)
+  draws = draws[, jumps ]
+  
   n = nrow( draws )
   par(mfrow = c(1,1))
   mat = matrix(seq(1, 3 * n), nrow = 3, byrow = FALSE)
