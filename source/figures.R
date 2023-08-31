@@ -19,12 +19,23 @@ trace_plots = function(draws, burn = 0, lags = 1, names){
   par(mfrow = c(1,1))
 }
 
-abs_plots = function( draws_h, date, y ){
+abs_plots = function( draws_h, burn = 0, lags = 1, date = NULL, y ){
+  if( !require(ggplot2) ) install.packages("ggplot2")
   library(ggplot2)
-  #T = length( y )
-  e.vol_hat = apply( exp( 0.5 * draws_h ) , MARGIN = 1, FUN = mean )
-  e.vol_min = apply( exp( 0.5 * draws_h ) , MARGIN = 1, FUN = quantile, probs = c(0.025) )
-  e.vol_max = apply( exp( 0.5 * draws_h ) , MARGIN = 1, FUN = quantile, probs = c(0.975) )
+  
+  Draws_h = draws_h
+  N = ncol( Draws_h ) 
+  if( burn != 0 ) Draws_h = Draws_h[, -c( 1:burn )]
+  jumps = seq(1, N - burn, by = lags)
+  Draws_h = Draws_h[, jumps ]
+  
+  if( is.null(date) ) date = seq.Date(from = Sys.Date(), 
+                                      length.out = length(y), 
+                                      by = 'day')
+  
+  e.vol_hat = apply( exp( 0.5 * Draws_h ) , MARGIN = 1, FUN = mean )
+  e.vol_min = apply( exp( 0.5 * Draws_h ) , MARGIN = 1, FUN = quantile, probs = c(0.025) )
+  e.vol_max = apply( exp( 0.5 * Draws_h ) , MARGIN = 1, FUN = quantile, probs = c(0.975) )
   data = matrix(c(abs( y ), e.vol_hat, e.vol_min, e.vol_max), ncol = 4)
   data = data.frame(data)
   data = cbind( date, data )
@@ -42,11 +53,23 @@ abs_plots = function( draws_h, date, y ){
   h
 }
 
-tail_plot = function(draws, date, model_name){
+tail_plot = function(draws_l, burn = 0, lags = 1, date = NULL, model_name){
+  if( !require(ggplot2) ) install.packages("ggplot2")
   library(ggplot2)
   if( !require(latex2exp) ) install.packages("latex2exp")
   library(latex2exp)
-  l_hat = apply(draws, MARGIN = 1, mean)
+  
+  Draws_l = draws_l
+  N = ncol( Draws_l ) 
+  if( burn != 0 ) Draws_l = Draws_l[, -c( 1:burn )]
+  jumps = seq(1, N - burn, by = lags)
+  Draws_l = Draws_l[, jumps ]
+  
+  if( is.null(date) ) date = seq.Date(from = Sys.Date(), 
+                                      length.out = length(y), 
+                                      by = 'day')
+  
+  l_hat = apply(Draws_l, MARGIN = 1, mean)
   df = data.frame(date = date, l = l_hat)
   h = ggplot(df) + geom_line(aes(x=date, y = l)) 
   h = h + theme_test() + xlab('')
@@ -55,6 +78,6 @@ tail_plot = function(draws, date, model_name){
   h = h + theme(axis.title.y = element_text(size = 18),
                 axis.text.x = element_text(size = 14),
                 axis.text.y = element_text(size = 14))
-  #h = h + xlim(as.Date(c(date[1], tail(date, 1) ) ) )
+  h = h + xlim(as.Date(c(date[1], tail(date, 1) ) ) )
   h
 }
