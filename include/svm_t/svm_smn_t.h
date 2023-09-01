@@ -45,7 +45,7 @@ double glogjac2_v( double v, double alpha, double li, double ls );
 double glogjac3_v( double v, double alpha, double li, double ls );
 // Model functions
 double logpost_v(double e, vec l, int T, double alpha, double li, double ls);
-double glogpost_v(double e, vec l, int T, double alpha, double li, double ls);
+double glogpost_v(double e, vec l, double inv_G, double dG_v, int T, double alpha, double li, double ls);
 // Metrics
 int G_v(vec e, double &G, double &inv_G, double &dG_v, int T, double alpha, double li, double ls);
 // Energy functions
