@@ -6,35 +6,51 @@ source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/figures.R'
 source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/data/t_data.R' )
 source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/model.selection.R' )
 
-
 # getwd()
 path = 'svm_smn/Simulacao/Estudos_Simulacao/ts/svm_t.cpp'
 Rcpp::sourceCpp( path )
 
 #data
-data = t_data(mu = 1.0, phi = 0.975, sigma = 0.15,
-              b0 = 0.1, b1 = 0.01, b2 = -0.05,
+data = t_data(mu = 1.0, phi = 0.98, sigma = 0.15,
+              b0 = 0.1, b1 = 0.01, b2 = 0.1,
               y0 = 0,
-              v = 20,
+              v = 7,
               T = 2e3,
-              seed = 8936381)
+              seed = 0)
 y = data$y
 h = data$h
+############################################################################## 
+# Plots
+library(ggplot2)
+df = data.frame( Retorno = y)
+g = ggplot(df) + geom_line(aes(x = 1:length( y ), y = Retorno))
+g = g + theme_test() + theme(axis.title.y = element_text(size = 18),
+                             axis.text.x = element_text(size = 16),
+                             axis.text.y = element_text(size = 18))
+g = g + xlab('')
+h = ggplot( df, aes(Retorno) )
+h = h + geom_histogram(aes(y = after_stat(density)), bins = 40, color = 'white')
+h = h + theme_test() + ylab('')
+h = h + theme_test() + theme(axis.title.x = element_text(size = 18),
+                             axis.text.x = element_text(size = 18),
+                             axis.text.y = element_text(size = 18))
+gridExtra::grid.arrange(g, h, nrow = 1, ncol = 2) 
+######
 
 # Sampling
-N = 5e4
+N = 5e2
 samples = svm_t(N,
                 L_theta = 20, eps_theta = c( 0.5, 0.5, 0.5 ), 
                 L_b = 20, eps_b = c( 0.1, 0.1, 0.1 ), 
                 L_h = 50, eps_h = 0.015,
                 L_v = 10, eps_v = 0.5, alpha = 0.01, li = 2, ls = 40,
                 y_T = c(0, y), 
-                seed = 67092 )
+                seed = 0 )
 samples$time / 60
 samples$acc / N
 ################## Save outputs
 #save(samples, file = '.RDara')
-#load('.RDara')
+#load('.RData')
 chain_theta = samples$chain$chain_theta
 chain_b = samples$chain$chain_b
 chain_h = samples$chain$chain_h
@@ -48,24 +64,34 @@ draws = matrix(c( chain_theta[1, ],
                   chain_b[2, ],
                   chain_b[3, ],
                   chain_v
-                  ), nrow = 7, byrow = TRUE)
+), nrow = 7, byrow = TRUE)
 draws = rbind( draws, chain_h )
 draws = rbind( draws, chain_l )
 ############################### Convergence analysis
-################### Trace plots
 ### burn
-burn = 5e3
-draws = draws[, -c( 1:burn )]
+burn = 1e2
 lags = 20
-jumps = seq(1, N - burn, by = lags)
-draws = draws[, jumps ]
-# plots
-trace_plots(draws[1:7, ], 
-            names = c('mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v') )
 ################### Numeric Analysis
-num_analisys(draws[1:7, ], 
+num_analisys(draws[1:7, ],
+             burn = burn, lags = lags,
              names = c( 'mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v'),
              digits = 4 )
+################### Plots
+# Trace plot
+trace_plots( draws[1:7, ], 
+             burn = burn, lags = lags,
+             names = c('mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v') )
+# Absolute returns plot
+abs_plots( chain_h, 
+           burn = burn, lags = lags, 
+           date = NULL, 
+           y )
+# Tails plot
+tail_plot( chain_l, 
+           date = NULL,
+           burn = burn, lags = lags,
+           model_name = 't'
+)
 ################################################################################
 ############################## Model Selection
 # p( y | theta ) = p( y | b, theta_h, v, h ) = p( y | b, h )
@@ -119,4 +145,4 @@ g2 = g2 + geom_line(aes(obs, vdd), color = 'red')
 g2 = g2 + geom_line(aes(obs, min), linetype = 'dashed')
 g2 = g2 + geom_line(aes(obs, max), linetype = 'dashed')
 g2 = g2 + theme_test()
-g1 / g2
+gridExtra::grid.arrange(g2, g2, nrow = 2, ncol = 1) 
