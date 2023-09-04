@@ -5,7 +5,7 @@ trace_plots = function(draws, burn = 0, lags = 1, names){
   jumps = seq(1, N - burn, by = lags)
   Draws = Draws[, jumps ]
   
-  n = nrow( Draws )
+  n = as.numeric( nrow( Draws ) )
   par(mfrow = c(1,1))
   mat = matrix(seq(1, 3 * n), nrow = 3, byrow = FALSE)
   layout( mat )
