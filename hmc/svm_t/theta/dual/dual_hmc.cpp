@@ -28,7 +28,8 @@ List hmc_svm_t(int N,
   int acc_theta = 0, div_theta = 0;
   double p_acc = 0.0;
   int L_theta;
-  vec theta_cur = zeros<vec>(3, 1), z = ones<vec>(2, 1);
+  vec theta_cur = zeros<vec>(3, 1), z = ones<vec>(2, 1), w = ones<vec>(2, 1);
+  w( 0 ) = 100;
   theta_cur[ 0 ] += 1.0;
   theta_cur[ 1 ] += 0.5 * ( log( 1 + 0.98 ) - log( 1 - 0.98 ) );
   theta_cur[ 2 ] += log( sqrt( 0.017 ) );
@@ -52,8 +53,11 @@ List hmc_svm_t(int N,
   // chain builting  
   for(int it = 1 ; it < N + 1 ; it ++){
     
-    z( 1 ) = ceil(lambda / eps_m);
-    L_theta = z.max();
+    z( 1 ) = ceil( lambda / eps_m );
+    w( 1 ) = z.max();
+    L_theta = ceil( w.min() );
+    
+    //cout << L_theta << " " << eps_m << "\n" << endl;
     
     theta_cur = hmc_theta( theta_cur, h, L_theta, eps_m, T, acc_theta, 
                            div_theta, p_acc, inv_M_theta );
@@ -61,7 +65,7 @@ List hmc_svm_t(int N,
     chain_theta.col( it ) += theta_cur;
     
     // dual averaging
-    if( it < M_adapt + 1 ){
+    if( it < M_adapt ){
       H_bar = (1 - 1 / (it + t0)) * H_bar + (delta - p_acc) / (it + t0);
       eps_m = exp( mu - sqrt( it ) * H_bar / gama );
       eps_bar = exp( pow(it, -k) * log(eps_m) + (1 - pow(it, -k)) * log( eps_bar ) );
