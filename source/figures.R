@@ -1,4 +1,4 @@
-trace_plots = function(draws, burn = 0, lags = 1, names){
+trace_plots = function(draws, burn = 0, lags = 1, names, lag.max = 100){
   Draws = draws
   N = ncol( Draws ) 
   if( burn != 0 ) Draws = Draws[, -c( 1:burn )]
@@ -12,7 +12,7 @@ trace_plots = function(draws, burn = 0, lags = 1, names){
   
   for(i in 1:n){
     plot( Draws[i, ], type = 'l', main = names[i], xlab = '', ylab = '')
-    plot(acf( Draws[i, ], lag.max = 100, plot = FALSE)[1:100], main ='', xlab = '', ylab = 'ACF')
+    plot(acf( Draws[i, ], lag.max = lag.max, plot = FALSE)[1:lag.max], main ='', xlab = '', ylab = 'ACF')
     plot(density( Draws[i, ] ), main ='', xlab = '', ylab = '')
   }
   
