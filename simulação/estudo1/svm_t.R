@@ -78,7 +78,10 @@ for( it in 1:n_rep ){
     draws = draws[, jumps ]
     
     x = apply(draws, MARGIN = 1, FUN = mean)
-    if( sum( x ) == Inf ) ruim = ruim + 1
+    if( sum( x ) == Inf ){
+      seeds[ it ] = sample(1:1e6, 1)
+      ruim = ruim + 1
+    } 
     if( sum( x ) < Inf ) break
   }
   
