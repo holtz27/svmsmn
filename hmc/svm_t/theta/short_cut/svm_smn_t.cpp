@@ -143,7 +143,7 @@ vec nuH_theta(mat dG_mu, mat dG_omega, mat dG_gamma, mat inv_G, vec p){
     
     return nuH;
 }
-vec hmc_theta(vec theta_cur, vec h, int L, vec eps, int T, int &acc, int &div, mat inv_M){
+vec hmc_theta(vec theta_cur, vec h, int L, double eps, int T, int &acc, int &div, mat inv_M, int k, double prec){
 
     vec vH = zeros<vec>(3 , 1);
     vec pcur = mvrgaussian( 3 );
@@ -169,30 +169,27 @@ vec hmc_theta(vec theta_cur, vec h, int L, vec eps, int T, int &acc, int &div, m
     vec vHc = theta_cur;
 
     // k numero de grupos
-    // k = 2
-    int k = 5;
     vec H_star = zeros<vec>(k, 1);
+    int cont = 0;
 
     for ( int jlp = 1 ; jlp < L + 1 ; jlp++ ){
 
       grad = glogpost_theta( vHa, h, inv_G, dG_mu, dG_omega, dG_gamma, T );
-      //if( std::isnan( sum( grad ) ) ) break;
       if( grad.has_nan() ){
         div++;
         break;
       } 
       
-      pb = pa + 0.5 * eps % grad;
-      vHb = vHa + eps % ( inv_M * pb ); // eps % inv.M * pb, onde inv_M = Id
+      pb = pa + 0.5 * eps * grad;
+      vHb = vHa + eps * ( inv_M * pb ); // eps % inv.M * pb, onde inv_M = Id
 
       grad = glogpost_theta( vHb, h, inv_G, dG_mu, dG_omega, dG_gamma, T );
-    	//if( std::isnan( sum( grad ) ) ) break;
       if( grad.has_nan() ){
         div++;
         break;
       } 
       
-      pb = pb + 0.5 * eps % grad;
+      pb = pb + 0.5 * eps * grad;
 
       vHa = vHb;
       vHc = vHb;
@@ -203,11 +200,14 @@ vec hmc_theta(vec theta_cur, vec h, int L, vec eps, int T, int &acc, int &div, m
       H_star( (jlp - 1) % k ) += - logpost_theta( vHb, h, T ) + 0.5 * auxp[ 0 ];
       
       if( jlp % k == 0 ){
-        if( stddev( H_star ) > 0.10 ) break;
+        if( stddev( H_star ) > prec ) break;
       } 
       
+      cont++;
     }
     
+    if( cont == 0 ) return theta_cur;
+
     vHb = vHc;
     pb = pc;
 
@@ -456,7 +456,7 @@ vec nuH_b(mat dG_b0, mat dG_delta, mat dG_b2, mat inv_G, vec p){
     
     return nuH;
 }
-vec hmc_b(vec b_cur, vec h, vec l, int L, vec eps, int T, vec y_T, int &acc, mat inv_M){
+vec hmc_b(vec b_cur, vec h, vec l, int L, double eps, int T, vec y_T, int &acc, int &div, mat inv_M, int k, double prec){
 
     vec vH = zeros<vec>(3 , 1);
     vec pcur = mvrgaussian( 3 );
@@ -466,10 +466,6 @@ vec hmc_b(vec b_cur, vec h, vec l, int L, vec eps, int T, vec y_T, int &acc, mat
     mat dG_mu = zeros<mat>(3, 3);
     mat dG_omega = zeros<mat>(3, 3);
     mat dG_gamma = zeros<mat>(3, 3);
-
-    // Metric matrix
-    //mat inv_M(3, 3);
-    //inv_M = inv( M_b );
     
     double Hm1 = 0.0;
     double Hmf = 0.0;
@@ -480,32 +476,51 @@ vec hmc_b(vec b_cur, vec h, vec l, int L, vec eps, int T, vec y_T, int &acc, mat
     Hm1 = - logpost_b( b_cur, h, l, T, y_T ) + 0.5 * auxp[0];
     vec pa = pcur;
     vec pb = pcur;
+    vec pc = pcur;
     vec vHa = b_cur;
     vec vHb = b_cur;
+    vec vHc = b_cur;
     
+    // k numero de grupos
+    vec H_star = zeros<vec>(k, 1);
+    int cont = 0;
     for (int jlp = 1 ; jlp < L + 1 ; jlp++ ){
 
       grad = glogpost_b( vHa, h, l, inv_G, dG_mu, dG_omega, dG_gamma, T, y_T );
-      if( std::isnan( sum( grad ) ) ) return b_cur;
-      //if( std::isnan( sum( grad ) ) ) break;
+      if( grad.has_nan() ){
+        div++;
+        break;
+      }
 
-    	pb = pa + 0.5 * eps % grad;
-      //cout << grad << endl;
-
-    	vHb = vHa + eps % ( inv_M * pb ); // eps % inv.M * pb, onde inv_M = Id
+    	pb = pa + 0.5 * eps * grad;
+      
+    	vHb = vHa + eps * ( inv_M * pb ); // eps % inv.M * pb, onde inv_M = Id
 
       grad = glogpost_b( vHb, h, l, inv_G, dG_mu, dG_omega, dG_gamma, T, y_T );
-    	if( std::isnan( sum( grad ) ) ) return b_cur;
-      //if( std::isnan( sum( grad ) ) ) break;
+    	if( grad.has_nan() ){
+        div++;
+        break;
+      }
 
-      pb = pb + 0.5 * eps % grad;
-      //cout << grad << endl;
-
+      pb = pb + 0.5 * eps * grad;
+      
     	vHa = vHb;
+      vHc = vHb;
     	pa = pb;
+    	pc = pb;
     	
+      auxp = pb.t() * inv_M * pb;
+      H_star( (jlp - 1) % k ) += - logpost_b( vHb, h, l, T, y_T ) + 0.5 * auxp[ 0 ];
+      
+      if( jlp % k == 0 ){
+        if( stddev( H_star ) > prec ) break;
+      } 
+      cont++;
     }
-    
+    if( cont == 0 ) return b_cur;
+    vHb = vHc;
+    pb = pc;
+
     auxp = pb.t() * inv_M * pb;
     Hmf = - logpost_b( vHb, h, l, T, y_T ) + 0.5 * auxp[0];
 
@@ -724,7 +739,7 @@ double nuH_v(double dG_v, double inv_G, double p){
 double gradHmom_v(double inv_G, double p){
     return inv_G * p;
 }
-double hmc_v(double e_cur, vec l, int L, double eps, int T, int &acc, double alpha, double li, double ls, double inv_M){
+double hmc_v(double e_cur, vec l, int L, double eps, int T, int &acc, double alpha, double li, double ls, double inv_M, int &div, int k, double prec){
 
     double vH = 0.0;
     double pcur = mvrgaussian( 1 )[ 0 ];
@@ -732,10 +747,6 @@ double hmc_v(double e_cur, vec l, int L, double eps, int T, int &acc, double alp
     
     double inv_G = 1.0;
     double dG_v = 0.0;
-
-    // Metric matrix
-    //mat inv_M(3, 3);
-    //inv_M = inv( M_b );
     
     double Hm1 = 0.0;
     double Hmf = 0.0;
@@ -746,30 +757,51 @@ double hmc_v(double e_cur, vec l, int L, double eps, int T, int &acc, double alp
     Hm1 = - logpost_v( e_cur, l, T, alpha, li, ls ) + 0.5 * auxp;
     double pa = pcur;
     double pb = pcur;
+    double pc = pcur;
     double vHa = e_cur;
     double vHb = e_cur;
+    double vHc = e_cur;
     
+    // k numero de grupos
+    vec H_star = zeros<vec>(k, 1);
+    int cont = 0;
     for (int jlp = 1 ; jlp < L + 1 ; jlp++ ){
 
       grad = glogpost_v( vHa, l, inv_G, dG_v, T, alpha, li, ls );
-      if( std::isnan( grad ) ) return e_cur;
+      if( std::isnan( grad ) ){
+        div++;
+        break;
+      }
 
     	pb = pa + 0.5 * eps * grad;
-      //cout << grad << endl;
-
+      
     	vHb = vHa + eps * ( inv_M * pb ); // eps % inv.M * pb, onde inv_M = Id
 
       grad = glogpost_v( vHb, l, inv_G, dG_v, T, alpha, li, ls );
-    	if( std::isnan( grad ) ) return e_cur;
+    	if( std::isnan( grad ) ){
+        div++;
+        break;
+      }
       
       pb = pb + 0.5 * eps * grad;
-      //cout << grad << endl;
-
+      
     	vHa = vHb;
+      vHc = vHb;
     	pa = pb;
-    	
+    	pc = pb;
+
+      auxp = pb * inv_M * pb;
+      H_star( (jlp - 1) % k ) += - logpost_v( vHb, l, T, alpha, li, ls ) + 0.5 * auxp;
+      
+      if( jlp % k == 0 ){
+        if( stddev( H_star ) > prec ) break;
+      }
+      cont++;
     }
-    
+    if( cont == 0 ) return e_cur;
+    vHb = vHc;
+    pb = pc;
+
     auxp = pb * inv_M * pb;
     Hmf = - logpost_v( vHb, l, T, alpha, li, ls ) + 0.5 * auxp;
 
