@@ -19,7 +19,7 @@ int G_theta(vec theta, mat &G, mat &inv_G, mat &dG_mu, mat &dG_omega, mat &dG_ga
 vec nuH_theta(mat dG_mu, mat dG_omega, mat dG_gamma, mat inv_G, vec p);
 //vec gradHmom_theta(mat inv_G, vec p);
 // hmc updates
-vec hmc_theta(vec theta_cur, vec h, int L, vec eps, int T, int &acc, int &div, mat inv_M);
+vec hmc_theta(vec theta_cur, vec h, int L, double eps, int T, int &acc, int &div, mat inv_M, int k, double prec);
 vec rmhmc_theta(vec theta_cur, vec h, int fixp, int L, vec eps, int T, int &acc);
 
 // beta
@@ -32,7 +32,7 @@ int G_b(vec b, vec h, vec l, mat &G, mat &inv_G, mat& dG_b0, mat &dG_delta, mat 
 vec nuH_b(mat dG_b0, mat dG_delta, mat dG_b2, mat inv_G, vec p);
 //vec gradHmom_b(mat inv_G, vec p);
 // hmc update
-vec hmc_b(vec b_cur, vec h, vec l, int L, vec eps, int T, vec y_T, int &acc, mat inv_M);
+vec hmc_b(vec b_cur, vec h, vec l, int L, double eps, int T, vec y_T, int &acc, int &div, mat inv_M, int k, double prec);
 vec rmhmc_b(vec b_cur, vec h, vec l, int fixp, int L, vec eps, int T, vec y_T , int &acc);
 
 // v
@@ -53,7 +53,7 @@ int G_v(vec e, double &G, double &inv_G, double &dG_v, int T, double alpha, doub
 double nuH_v(double dG_v, double inv_G, double p);
 double gradHmom_v(double inv_G, double p);
 // hmc update
-double hmc_v(double e_cur, vec l, int L, double eps, int T, int &acc, double alpha, double li, double ls, double inv_M);
+double hmc_v(double e_cur, vec l, int L, double eps, int T, int &acc, double alpha, double li, double ls, double inv_M, int &div, int k, double prec);
 double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc, double alpha, double li, double ls);
 
 // l
