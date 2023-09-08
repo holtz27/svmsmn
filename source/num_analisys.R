@@ -26,10 +26,11 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits ){
       theta_max,
       CD$z,
       IF,
+      n_eff,
       mc_error), nrow = nrow( Draws ), byrow = FALSE
   )
   row.names( data ) = names
-  colnames( data ) = c( 'media', 'sd', '2.5%', '97.5%', 'CD', 'IF', 'MC erro')
+  colnames( data ) = c( 'media', 'sd', '2.5%', '97.5%', 'CD', 'IF', 'n_eff', 'MC erro')
   
   return( round( data, digits ) )
 }
