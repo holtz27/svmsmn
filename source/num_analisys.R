@@ -26,7 +26,7 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits ){
       theta_max,
       CD$z,
       IF,
-      n_eff,
+      N_eff,
       mc_error), nrow = nrow( Draws ), byrow = FALSE
   )
   row.names( data ) = names
