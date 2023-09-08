@@ -1,9 +1,9 @@
-vgamma_data = function(mu, phi, sigma,
-                       b0, b1, b2,
-                       y0,
-                       v, 
-                       T,
-                       seed = NULL){
+vg_data = function(mu, phi, sigma,
+                   b0, b1, b2,
+                   y0,
+                   v, 
+                   T,
+                   seed = NULL){
   library( invgamma )
   ############################################################################
   ################################# SVM-SMN Model ############################
