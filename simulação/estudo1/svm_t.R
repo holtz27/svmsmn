@@ -2,6 +2,7 @@
 #### librarys
 source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/num_analisys.R' )
 source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/data/t_data.R' )
+source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/figures.R' )
 # getwd()
 path = 'svm_smn/Simulacao/Estudos_Simulacao/ts/svm_t.cpp'
 Rcpp::sourceCpp( path )
@@ -29,14 +30,13 @@ theta = c(mu = 1.0,
 T = 3e3
 resultados = list( )
 # mcmc setting
-N = 1e4
+N = 1e2
 burn = 0.5 * N
 lags = 1
 
 # sampling
 for( it in 1:n_rep ){
   if( it == 1 ) time = Sys.time()
-  
   
   cat( paste0('réplica: ', it, '\n' ) )
   
@@ -78,11 +78,13 @@ for( it in 1:n_rep ){
     jumps = seq(1, N - burn, by = lags)
     draws = draws[, jumps ]
     x = apply(draws, MARGIN = 1, FUN = mean)
-    if( sum( x ) == Inf ){
+    
+    if( abs( sum( x ) ) == Inf ){
       seeds[ it ] = sample(1:1e6, 1)
       ruim = ruim + 1
+    }else{
+      break
     } 
-    if( sum( x ) < Inf ) break
   }
   
   ################### Numeric Analysis
@@ -92,6 +94,19 @@ for( it in 1:n_rep ){
                                     digits = 4 )
   vies[ , it ] = resultados[[ it ]][ , 1] - theta
   smse[ , it ] = vies[ , it ] ** 2
+  ################### save plots
+  folder = 'svm_smn/Simulacao/Estudos_Simulacao/ts/estudo1/'
+  name_file = paste0('trace_rep_', it, '.pdf') 
+  file = paste0(folder, name_file)
+  pdf(file = file,
+      width = 12, height = 6)
+  # Trace plot
+  trace_plots( draws, 
+               burn = 0, lags = 1,
+               names = c('mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v'),
+               lag.max = 400
+               )
+  dev.off()
   
   cat( '\n' )
   
@@ -108,6 +123,7 @@ for( it in 1:n_rep ){
     time = Sys.time() - time
   } 
 }
+
 time 
 round( sumario, 4 )
 ruim
