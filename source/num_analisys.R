@@ -18,11 +18,13 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits ){
   theta_hat = apply( chain, MARGIN = 2, FUN = mean )
   theta_sd  = apply( chain, MARGIN = 2, FUN = sd )
   theta_min = apply( chain, MARGIN = 2, FUN = quantile, probs = c(0.025) )
+  theta_median = apply( chain, MARGIN = 2, FUN = quantile, probs = c(0.5) )
   theta_max = apply( chain, MARGIN = 2, FUN = quantile, probs = c(0.975) )
   data = matrix(
     c(theta_hat,
       theta_sd,
       theta_min,
+      theta_median,
       theta_max,
       CD$z,
       IF,
@@ -30,7 +32,7 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits ){
       mc_error), nrow = nrow( Draws ), byrow = FALSE
   )
   row.names( data ) = names
-  colnames( data ) = c( 'media', 'sd', '2.5%', '97.5%', 'CD', 'IF', 'n_eff', 'MC erro')
+  colnames( data ) = c( 'media', 'sd', '2.5%', '50%','97.5%', 'CD', 'IF', 'n_eff', 'MC erro')
   
   return( round( data, digits ) )
 }
