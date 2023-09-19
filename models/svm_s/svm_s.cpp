@@ -2,22 +2,9 @@
 
 #include "svm_smn_t.h"
 
-/*
-double rtgamma( double li, double ls, double shape, double scala ){
- 
- double tg;
- 
- tg = R::pgamma( ls, shape, scala, true, false );
- tg -= R::pgamma(li, shape, scala, true, false );
- tg *= R::runif( 0, 1 );
- tg += R::pgamma(li, shape, scala, true, false );
- tg = R::qgamma( tg, shape, scala, true, false );
- 
- return tg;
-}
- */
 //#############################################################################
 //########################## rtgamma
+/*
 double rtgamma( double min, double max, double shape, double scale ){
   
   Environment pkg = Environment::namespace_env("truncdist");
@@ -31,7 +18,22 @@ double rtgamma( double min, double max, double shape, double scale ){
          _["shape"] = shape, 
          _["scale"] = scale);
   
+  //Rcout << shape << " " << scale << endl;
+  
   return x[ 0 ];
+}
+ */
+double rtgamma( double li, double ls, double shape, double scala ){
+  
+  double tg;
+  
+  tg = R::pgamma( ls, shape, scala, true, false );
+  tg -= R::pgamma( li, shape, scala, true, false );
+  tg *= R::runif( 0, 1 );
+  tg += R::pgamma( li, shape, scala, true, false );
+  tg = R::qgamma( tg, shape, scala, true, false );
+  
+  return tg;
 }
 //########################## l
 vec l_gibbs(double v, vec y_T, vec h, vec b, int T){
@@ -102,7 +104,7 @@ List svm_s(int N,
   double v_cur = 5.0;
 
   // iniciando l
-  vec l_cur = zeros<vec>(T, 1), aux = zeros<vec>(T, 1), u = zeros<vec>(T, 1);
+  vec l_cur = zeros<vec>(T, 1);
   for( int k = 0 ; k < T ; k++ ){
     l_cur[ k ] = R::rbeta( v_cur, 1.0 );
   }
@@ -129,7 +131,8 @@ List svm_s(int N,
     theta_cur = rmhmc_theta( theta_cur, h_cur, 5, L_theta, eps_theta, T, acc_theta );
     b_cur = rmhmc_b( b_cur, h_cur, l_cur, 5, L_b, eps_b, T, y_T , acc_b );
     h_cur = hmc_h( h_cur, theta_cur, b_cur, l_cur, L_h, eps_h, T, y_T, acc_h );
-    v_cur = rtgamma( 1.0, R_PosInf, T + 2.0, 1.0 / (0.1 - sum( log(l_cur) )) );
+    v_cur = rtgamma( 1.0, R_PosInf, T + 0.08, 1.0 / (0.04 - sum( log(l_cur) )) );
+    //v_cur = rtgamma( 1.0, 40.0, T + 0.08, 1.0 / (0.04 - sum( log(l_cur) )) );
     l_cur = l_gibbs(v_cur, y_T, h_cur, b_cur, T);
    
     // chain update 
