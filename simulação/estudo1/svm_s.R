@@ -7,7 +7,7 @@ path = 'svm_smn/Simulacao/Estudos_Simulacao/slash/svm_s.cpp'
 Rcpp::sourceCpp( path )
 
 # N° réplicas
-n_rep = 10
+n_rep = 2
 vies = smse = matrix(nrow = 7, ncol = n_rep)
 # Set semente
 seed = 18936381
@@ -108,7 +108,9 @@ for( it in 1:n_rep ){
   } 
 }
 
-time 
-round( sumario, 4 )
-resultados
-ruim
+resultados = list(time = time,
+                  sumario = round( sumario, 4 ),
+                  resultados = resultados,
+                  ruim = ruim)
+save(resultados, file = 'estudo1_svm_s.RData')
+
