@@ -2,6 +2,7 @@
 #### librarys
 source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/num_analisys.R' )
 source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/data/s_data.R' )
+require( coda )
 # getwd()
 path = 'svm_smn/Simulacao/Estudos_Simulacao/slash/svm_s.cpp'
 Rcpp::sourceCpp( path )
@@ -76,7 +77,7 @@ for( it in 1:n_rep ){
     draws = draws[, jumps ]
     x = apply(draws, MARGIN = 1, FUN = mean)
     
-    if( abs( sum( x ) ) == Inf ){
+    if( is.infinite( abs( sum( x ) ) ) || is.na( abs( sum( x ) ) ) ){
       seeds[ it ] = sample(1:1e6, 1)
       ruim = ruim + 1
     }else{
