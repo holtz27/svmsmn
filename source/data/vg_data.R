@@ -11,7 +11,7 @@ vg_data = function(mu, phi, sigma,
   # h_t = mu + phi * ( h_{t-1} - mu ) + sigma * n_{t}
   ############################################################################
   ###################### Variance Gamma: lambda|v ~ IGamma(v/2, v/2) 
-  ### Obs.: X ~ Gamma(a, rate = b) -> 1/X ~ IGamma(a, 1/rate = scale = b)
+  ### Obs.: X ~ Gamma(a, scale = 1/b) -> 1/X ~ IGamma(a, scale = b)
   # https://en.wikipedia.org/wiki/Inverse-gamma_distribution#Related_distributions
   if( is.null( seed ) ) seed = sample( 1:1e6, 1 )
   y = h = l = rep(0, T)
