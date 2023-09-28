@@ -119,4 +119,4 @@ resultados = list(time = time,
                   sumario = round( sumario, 4 ),
                   resultados = resultados,
                   ruim = ruim)
-#save(resultados, file = 'estudo1_s.RData')
+save(resultados, file = 'estudo1_t.RData')
