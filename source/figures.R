@@ -66,7 +66,7 @@ tail_plot = function(draws_l, burn = 0, lags = 1, date = NULL, model_name){
   Draws_l = Draws_l[, jumps ]
   
   if( is.null(date) ) date = seq.Date(from = Sys.Date(), 
-                                      length.out = length(y), 
+                                      length.out = length(Draws_l), 
                                       by = 'day')
   
   l_hat = apply(Draws_l, MARGIN = 1, mean)
