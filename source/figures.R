@@ -71,7 +71,7 @@ tail_plot = function(draws_l, burn = 0, lags = 1, date = NULL, model_name){
   
   l_hat = apply(Draws_l, MARGIN = 1, mean)
   df = data.frame(date = date, l = l_hat)
-  h = ggplot(df) + geom_line(aes(x=date, y = l_hat)) 
+  h = ggplot(df) + geom_line(aes(x=date, y = l)) 
   h = h + theme_test() + xlab('')
   #h = h + scale_x_date(date_breaks = '7 year', date_labels = '%Y')
   h = h + ylab(TeX(paste0('SVM-', model_name, ': ', '$\\lambda_{t}$')))
