@@ -21,5 +21,5 @@ n_data = function(mu, phi, sigma,
       y[t] = rnorm(1, b0 + b1*y[t - 1] + b2 * exp(h[t]), exp(h[t]/2) )
     }
   }
-  return( y = y, h = h )
+  return( list(y = y, h = h) )
 }
