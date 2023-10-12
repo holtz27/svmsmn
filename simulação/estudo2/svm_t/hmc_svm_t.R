@@ -8,15 +8,14 @@ path = 'svm_smn/Simulacao/Estudos_Simulacao/ts/hmc/short_cut/hmc_svm_t.cpp'
 Rcpp::sourceCpp( path )
 
 #data
-data = t_data(mu = 1.0, phi = 0.98, sigma = 0.15,
-              b0 = 0.1, b1 = 0.01, b2 = -0.05,
+data = t_data(mu = 0.10, phi = 0.98, sigma = 0.15,
+              b0 = 0.1, b1 = 0.03, b2 = -0.10,
               y0 = 0,
-              v = 20,
+              v = 5,
               T = 2e3,
               seed = 0
               )
 y = data$y
-h = data$h
 ############################################################################## 
 # Plots
 library(ggplot2)
@@ -34,31 +33,26 @@ h = h + theme_test() + theme(axis.title.x = element_text(size = 18),
                              axis.text.y = element_text(size = 18))
 gridExtra::grid.arrange(g, h, nrow = 1, ncol = 2) 
 ######
-M_theta = diag(c(1, 1, 1), 3)
-M_b = diag(1, 3, 3)
-M_v = 1.0
 
 # Sampling
-N = 3e3
+N = 2e4
 samples = hmc_svm_t(N,
                     # theta
-                    L_theta = 50, eps_theta = 0.01, M_theta,
+                    L_theta = 50, eps_theta = 0.01, M_theta = diag(1, 3, 3),
                     k_theta = 2, prec_theta = 0.005,
                     # b
-                    L_b = 50, eps_b = 0.005, M_b,
+                    L_b = 100, eps_b = 0.005, M_b = diag(1, 3, 3),
                     k_b = 2, prec_b = 0.005,
                     # h
                     L_h = 50, eps_h = 0.015,
                     # v
-                    L_v = 20, eps_v = 0.05, M_v,
-                    k_v = 2, prec_v = 0.01, alpha = 1.0, li = 2, ls = 40,
+                    L_v = 20, eps_v = 0.1, M_v = 1.0,
+                    k_v = 2, prec_v = 0.01, 
+                    alpha = 0.1, li = 2, ls = 40,
                     y_T = c(0, y), 
-                    seed = 0,
-                    eps_random = FALSE
+                    seed = 0
                     )
-################## Save outputs
-#save(samples, file = '.RDara')
-#load('.RData'
+################## utputs
 chain_theta = samples$chain$chain_theta
 chain_b = samples$chain$chain_b
 chain_h = samples$chain$chain_h
@@ -77,48 +71,16 @@ draws = matrix(c( chain_theta[1, ],
 #draws = rbind( draws, chain_l )
 ############################### Convergence analysis
 ### burn
-burn = 1e3
-lags = 1
+burn = 1e4
 ################### Numeric Analysis
 num_analisys(draws[1:7, ],
-             burn = burn, lags = lags,
+             burn = burn, lags = 1,
              names = c( 'mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v'),
              digits = 4 )
 ################### Plots
 # Trace plot
 trace_plots( draws[1:7, ], 
-             burn = burn, lags = lags,
+             burn = burn, lags = 1,
              lag.max = 400,
-             names = c('mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v') )
-# Absolute returns plot
-abs_plots( chain_h, 
-           burn = burn, lags = lags, 
-           date = NULL, 
-           y )
-# Tails plot
-tail_plot( chain_l, 
-           date = NULL,
-           burn = burn, lags = lags,
-           model_name = 't'
-)
-############################### h
-h_hat = apply(chain_h, MARGIN = 1, FUN = mean)
-h_min = apply(chain_h, MARGIN = 1, FUN = quantile, probs = c(0.025) )
-h_max = apply(chain_h, MARGIN = 1, FUN = quantile, probs = c(0.975) )
-data = matrix(c(1:nrow(chain_h), h, h_hat, h_min, h_max), ncol = 5)
-data = data.frame( data )
-names(data) = c('obs', 'vdd', 'media', 'min','max')
-#plots
-g1 = ggplot(data[ 1:1000, ])
-g1 = g1 + geom_line(aes(obs, media))
-g1 = g1 + geom_line(aes(obs, vdd), color = 'red')
-g1 = g1 + geom_line(aes(obs, min), linetype = 'dashed')
-g1 = g1 + geom_line(aes(obs, max), linetype = 'dashed')
-g1 = g1 + theme_test()
-g2 = ggplot(data[ 1001:2000, ])
-g2 = g2 + geom_line(aes(obs, media))
-g2 = g2 + geom_line(aes(obs, vdd), color = 'red')
-g2 = g2 + geom_line(aes(obs, min), linetype = 'dashed')
-g2 = g2 + geom_line(aes(obs, max), linetype = 'dashed')
-g2 = g2 + theme_test()
-gridExtra::grid.arrange(g2, g2, nrow = 2, ncol = 1) 
+             names = c('mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v') 
+             )
