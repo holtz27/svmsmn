@@ -5,6 +5,7 @@ ibovespa[, 2] = as.numeric( ibovespa[, 2] )
 ibovespa = na.omit(ibovespa)
 #ibovespa = tail(ibovespa, n = 3992)
 ibovespa = ibovespa[1:3500,]
+dates = as.Date( ibovespa[, 1] )
 #View(ibovespa)
 T = nrow(ibovespa)
 log.ret = 100 * ( log( ibovespa[2:T, 2] ) - log( ibovespa[1:(T-1), 2] ) ) 
