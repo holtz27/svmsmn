@@ -3,13 +3,13 @@ ibovespa = read.csv('https://raw.githubusercontent.com/holtz27/rbras/main/aplica
 ibovespa = ibovespa[, c('Date', 'Close')]
 ibovespa[, 2] = as.numeric( ibovespa[, 2] ) 
 ibovespa = na.omit(ibovespa)
-ibovespa = tail(ibovespa, n = 3992)
-#View(ibovespa)
+#ibovespa = tail(ibovespa, n = 1996) #n = 3992
+ibovespa = ibovespa[1:3500,]
+View(ibovespa)
 T = nrow(ibovespa)
 log.ret = 100 * ( log( ibovespa[2:T, 2] ) - log( ibovespa[1:(T-1), 2] ) )
 dates = as.Date( ibovespa[, 1] )
 ################################################################################
-#### librarys
 #### librarys
 library( loo )
 source( 'https://raw.githubusercontent.com/holtz27/svmsmn/main/source/num_analisys.R' )
@@ -25,7 +25,8 @@ samples = svmn(N,
                L_b = 20, eps_b = 0.1,
                L_h = 50, eps_h = 0.015,
                y_T = c(0, log.ret),
-               seed = 0 ) 
+               seed = 0 
+               ) 
 
 samples$time / 60
 samples$acc / N
@@ -49,16 +50,15 @@ draws = rbind( draws, matrix(1, nrow = T, ncol = N + 1) )
 ################### Trace plots
 ### burn
 burn = 0
-draws = draws[, -c( 1:burn )]
 lags = 1
-jumps = seq(1, N - burn, by = lags)
-draws = draws[, jumps ]
 # plots
-trace_plots(draws[1:6, ], 
+trace_plots(draws[1:6, ],
+            burn = burn, lags = lags,
             names = c('mu', 'phi', 'sigma', 'b0', 'b1', 'b2') )
 abs_plots(chain_h, dates[-1], log.ret)
 ################### Numeric Analysis
-num_analisys(draws[1:6, ], 
+num_analisys(draws[1:6, ],
+             burn = burn, lags = lags,
              names = c( 'mu', 'phi', 'sigma', 'b0', 'b1', 'b2'),
              digits = 4 )
 ###############################################################################
