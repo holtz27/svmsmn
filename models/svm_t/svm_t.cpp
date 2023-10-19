@@ -28,36 +28,37 @@ List svm_t(int N,
   // iniciando theta
   int acc_theta = 0;
   vec theta_cur = zeros<vec>(3, 1);
-  theta_cur[ 0 ] += 0.005;
+  theta_cur[ 0 ] += 0.1;
   theta_cur[ 1 ] += 0.5 * ( log( 1 + 0.98 ) - log( 1 - 0.98 ) );
-  theta_cur[ 2 ] += log( sqrt( 0.017 ) );
+  theta_cur[ 2 ] += log( 0.15 );
   
   // iniciando h
   int acc_b = 0;
   vec h_cur = zeros<vec>(T, 1);
-  h_cur[ 0 ] += 0.005 + sqrt( 0.03 ) / (1 - 0.95 * 0.95 ) * randn();
+  h_cur[ 0 ] += 0.1 + 0.15 / sqrt(1 - 0.98 * 0.98 ) * randn();
   for( int kt = 1 ; kt < T ; kt++ ){
-    h_cur[ kt ] += 0.005 + 0.95 * ( h_cur[ kt - 1 ] -0.005 ) + sqrt( 0.03 ) * randn();
+    h_cur[ kt ] += 0.1 + 0.98 * ( h_cur[ kt - 1 ] - 0.1 ) + 0.15 * randn();
   }
   
   // iniciando b
   int acc_h = 0;
   vec b_cur = zeros<vec>(3, 1);
-  b_cur[ 0 ] += 0.3;
+  b_cur[ 0 ] += 0.1;
   b_cur[ 1 ] += 0.5 * ( log( 1 + 0.03 ) - log( 1 - 0.03 ) );
-  b_cur[ 2 ] += -0.025;
+  b_cur[ 2 ] += -0.1;
   
   // iniciando v
-  int acc_v = 0;
-  double v_cur = 20;
-  v_cur = ( 2 / alpha ) * atanh( (2 * v_cur - ls - li) / (ls - li) );
-  
+  int acc_v = 0, div_v = 0;
+  double v_cur = 5;
+    
   // iniciando l
   vec l_cur = zeros<vec>(T, 1);
   for( int k = 0 ; k < T ; k++ ){
     //randg( distr_param(a,b) )
-    l_cur[ k ] = randg( distr_param( 0.5 * 20, 0.1 ) );
+    l_cur[ k ] = randg( distr_param( 0.5 * v_cur, 2.0 / v_cur ) );
   }
+  
+  v_cur = ( 2 / alpha ) * atanh( (2 * v_cur - ls - li) / (ls - li) );
   
   // iniciando cadeia
   mat chain_theta = zeros<mat>( 3, N + 1 );
@@ -115,6 +116,10 @@ List svm_t(int N,
   acc[ 3 ] += acc_v;
   
   double time = timer.toc();
+  
+  Rcout << "\nTempo decorrido: " << time / 60 << " min" << endl;
+  Rcout << "\nTaxas aceitação:\n" << acc / N << endl;
+  Rcout << "Divergências: \n" << div_v << endl;
   
   return List::create( Named("chain") = chain, 
                        Named("acc") = acc, 
