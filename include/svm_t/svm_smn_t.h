@@ -19,7 +19,7 @@ int G_theta(vec theta, mat &G, mat &inv_G, mat &dG_mu, mat &dG_omega, mat &dG_ga
 vec nuH_theta(mat dG_mu, mat dG_omega, mat dG_gamma, mat inv_G, vec p);
 //vec gradHmom_theta(mat inv_G, vec p);
 // hmc updates
-vec hmc_theta(vec theta_cur, vec h, int L, double eps, int T, int &acc);
+vec hmc_theta(vec theta_cur, vec h, int L, vec eps, int T, int &acc);
 vec rmhmc_theta(vec theta_cur, vec h, int fixp, int L, vec eps, int T, int &acc);
 
 // beta
@@ -35,14 +35,6 @@ vec nuH_b(mat dG_b0, mat dG_delta, mat dG_b2, mat inv_G, vec p);
 vec rmhmc_b(vec b_cur, vec h, vec l, int fixp, int L, vec eps, int T, vec y_T , int &acc);
 
 // v
-//
-double jac_v( double v, double alpha, double li, double ls );
-double jac2_v( double v, double alpha, double li, double ls );
-double gjac_v( double v, double alpha, double li, double ls );
-double gjac2_v( double v, double alpha, double li, double ls );
-double glogjac_v( double v, double alpha, double li, double ls );
-double glogjac2_v( double v, double alpha, double li, double ls );
-double glogjac3_v( double v, double alpha, double li, double ls );
 // Model functions
 double logpost_v(double e, vec l, int T, double alpha, double li, double ls);
 double glogpost_v(double e, vec l, double inv_G, double dG_v, int T, double alpha, double li, double ls);
@@ -52,7 +44,7 @@ int G_v(vec e, double &G, double &inv_G, double &dG_v, int T, double alpha, doub
 double nuH_v(double dG_v, double inv_G, double p);
 double gradHmom_v(double inv_G, double p);
 // hmc update
-double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc, double alpha, double li, double ls);
+double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc, double alpha, double li, double ls );
 
 // l
 vec l_gibbs(double e, vec y_T, vec h, vec b, int T, double alpha, double li, double ls);
