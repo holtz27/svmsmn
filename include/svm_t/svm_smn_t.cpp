@@ -1,4 +1,4 @@
-#include "svm_smn_ts.h"
+#include "svm_smn_t.h"
 
 // parameters priori
 double mu_0 = 0.0, s_0 = 3.2;
@@ -7,7 +7,9 @@ double a_s = 2.5, b_s = 0.025;
 double mu_b0 = 0.0, s_b0 = 3.2;
 double a_b1 = 5.0, b_b1 = 1.5;
 double mu_b2 = 0.0, s_b2 = 3.2;
-double a_v = 2.0, b_v = 0.1;
+double mu_e = 20.0;
+double s_e = 10.0;
+//double a_v = 2.0, b_v = 0.1;
 /***********************************************************************************/
 /***********************************************************************************/
 /***********************************************************************************/
@@ -115,7 +117,6 @@ int G_theta(vec theta, mat &G, mat &inv_G, mat& dG_mu, mat &dG_omega, mat &dG_ga
     //if( !G.is_sympd() ) std::cout << "theta" << theta[0] << " " << theta[1] << " " << theta[2] << std::endl;
     if( !G.is_sympd() ){
       return -1;
-      //break;
     }
 
     inv_G = inv_sympd( G );
@@ -131,9 +132,6 @@ int G_theta(vec theta, mat &G, mat &inv_G, mat& dG_mu, mat &dG_omega, mat &dG_ga
     return 1;
     
 }
-//vec gradHmom_theta(mat inv_G, vec p){
-//    return inv_G * p;
-//}
 vec nuH_theta(mat dG_mu, mat dG_omega, mat dG_gamma, mat inv_G, vec p){
     vec iGp = inv_G * p;
     vec aux1 = iGp.t() * dG_mu * iGp;
@@ -146,7 +144,7 @@ vec nuH_theta(mat dG_mu, mat dG_omega, mat dG_gamma, mat inv_G, vec p){
     
     return nuH;
 }
-vec hmc_theta(vec theta_cur, vec h, int L, double eps, int T, int &acc){
+vec hmc_theta(vec theta_cur, vec h, int L, vec eps, int T, int &acc){
 
     vec vH = zeros<vec>(3 , 1);
     vec pcur = mvrgaussian( 3 );
@@ -170,9 +168,9 @@ vec hmc_theta(vec theta_cur, vec h, int L, double eps, int T, int &acc){
     
     for (int jlp = 1 ; jlp < L + 1 ; jlp++ ){
     
-    	pb = pa + 0.5 * eps * glogpost_theta( vHa, h, inv_G, dG_mu, dG_omega, dG_gamma, T );
-    	vHb = vHa + eps * pb;
-    	pb = pb + 0.5 * eps * glogpost_theta( vHb, h, inv_G, dG_mu, dG_omega, dG_gamma, T );
+    	pb = pa + 0.5 * eps % glogpost_theta( vHa, h, inv_G, dG_mu, dG_omega, dG_gamma, T );
+    	vHb = vHa + eps % pb;
+    	pb = pb + 0.5 * eps % glogpost_theta( vHb, h, inv_G, dG_mu, dG_omega, dG_gamma, T );
     	vHa = vHb;
     	pa = pb;
     	
@@ -205,10 +203,7 @@ vec rmhmc_theta(vec theta_cur, vec h, int fixp, int L, vec eps, int T, int &acc)
     int gcond = 0;
     /****************************************************************/
     gcond = G_theta(theta_cur, G, inv_G, dG_mu, dG_omega, dG_gamma, T);
-    if( gcond == -1 ){
-      return theta_cur;
-      //break;
-    }
+    if( gcond == -1 ) return theta_cur;
     vec pcur = chol( G ).t() * mvrgaussian( 3 );
     /****************************************************************/
     vec aux = pcur.t() * inv_G * pcur;
@@ -236,21 +231,19 @@ vec rmhmc_theta(vec theta_cur, vec h, int fixp, int L, vec eps, int T, int &acc)
 	
 	    gdpth1 = glogpost_theta( theta1a, h, inv_G, dG_mu, dG_omega, dG_gamma, T);
     	gradHMCth1 = gdpth1 - 0.5 * nuH_theta( dG_mu, dG_omega, dG_gamma, inv_G, pa );
-    
+      //cout << gdpth1 << ' ' << gradHMCth1 << endl;
     	/****************************************/
     	/***** pn+1/2 *****************************/
 	
     	for( int jfix = 1; jfix < fixp + 1 ; jfix++ ){
         	pb = pa - 0.5 * eps % gradHMCth1;
         	gradHMCth1 = gdpth1 - 0.5 * nuH_theta( dG_mu, dG_omega, dG_gamma, inv_G, pb );
+          //cout << gradHMCth1 << endl;
     	}
     
     	/**********************************************************/
     	gcond = G_theta( theta1a, G, inv_G, dG_mu, dG_omega, dG_gamma, T );
-    	if( gcond == -1 ){
-        return theta_cur;
-        //break;
-      }
+    	if( gcond == -1 ) return theta_cur;
       gdmom1 = gH_mom( inv_G, pb);
     	gdmom2 = gH_mom( inv_G, pb);
     	/****************************************************/
@@ -260,27 +253,23 @@ vec rmhmc_theta(vec theta_cur, vec h, int fixp, int L, vec eps, int T, int &acc)
         
         	theta1b = theta1a + 0.5 * eps % gdmom1 + 0.5 * eps % gdmom2;
         	gcond = G_theta( theta1b, G, inv_G, dG_mu, dG_omega, dG_gamma, T );
-          if( gcond == -1 ){
-            return theta_cur;
-            //break;
-          }
+          if( gcond == -1 ) return theta_cur;
         	gdmom2 = gH_mom( inv_G, pb );
         
     	}
     /*************************************************************/
     	gdpth1 = glogpost_theta( theta1b, h, inv_G, dG_mu, dG_omega, dG_gamma, T);
     	gradHMCth1 = gdpth1 - 0.5 * nuH_theta( dG_mu, dG_omega, dG_gamma, inv_G, pb );
+      //cout << gdpth1 << ' ' << gradHMCth1 << endl;
+
     	pb = pb - 0.5 * eps % gradHMCth1;
     	pa = pb;
     	theta1a = theta1b;
     }
 
     aux = pb.t() * inv_G * pb;
-
-    HMthetaf = -logpost_theta( theta1b, h, T ) + 0.5 * log( det( G ) ) + 0.5 * aux[0];
-   
+    HMthetaf = -logpost_theta( theta1b, h, T ) + 0.5 * log( det( G ) ) + 0.5 * aux[ 0 ];
     uMH = randu( distr_param( 0, 1 ) );
-
     aMH = std::min( 1.0, exp( -HMthetaf + HMtheta1 ) );
     
     if ( uMH < aMH ){ 
@@ -422,9 +411,6 @@ vec nuH_b(mat dG_b0, mat dG_delta, mat dG_b2, mat inv_G, vec p){
     
     return nuH;
 }
-//vec gradHmom_b(mat inv_G, vec p){
-//    return inv_G * p;
-//}
 vec rmhmc_b(vec b_cur, vec h, vec l, int fixp, int L, vec eps, int T, vec y_T , int &acc){
     
     vec theta2p = zeros<vec>(3, 1);
@@ -494,10 +480,8 @@ vec rmhmc_b(vec b_cur, vec h, vec l, int fixp, int L, vec eps, int T, vec y_T , 
     }
 
     aux = pb.t() * inv_G * pb;
-
     HMthetaf = - logpost_b( theta2b, h, l, T, y_T ) + 0.5 * log( det( G ) ) + 0.5 * aux[0];
     uMH = randu( distr_param( 0, 1 ) );
-
     aMH = std::min( 1.0, exp( - HMthetaf + HMtheta1 ) );
 
     if( uMH < aMH ){
@@ -510,79 +494,46 @@ vec rmhmc_b(vec b_cur, vec h, vec l, int fixp, int L, vec eps, int T, vec y_T , 
 
     return b;
 }
-
 //#############################################################################
 //#############################################################################
-//########################## v.1
+//########################## v.3
 //######## Transformação: T(v) = e                         ############
 //######## e = (2 / alpha) * arctanh((2 * v - ls - li) / (ls - li)), alpha != 0 e li < ls
 // Const. definition
-//double alpha = 2.0;
+// e ~ N(mu_e, sigma_e)
 //double li = 2.0;
 //double ls = 40.0;
-//#############################################################################
-double jac_v( double v, double alpha, double li, double ls ){
-  return alpha * (ls - v) * (v - li) / (ls - li);
-} 
-double jac2_v( double v, double alpha, double li, double ls ){
-  double w = (2 * v - ls - li) / (ls - li);
-  return - alpha * w * jac_v( v, alpha, li, ls );
-}
-double gjac_v( double v, double alpha, double li, double ls ){
-  double w = (2 * v - ls - li) / (ls - li);
-  return - alpha * w;
-}
-double gjac2_v( double v, double alpha, double li, double ls ){
-  
-  double x = 6 * v * (li + ls - v) - (ls + li)*(ls + li) - 2 * li * ls;
-  x *= - alpha * alpha / ( (ls - li) * (ls - li) ); 
-  
-  return x;
-}
-double glogjac_v( double v, double alpha, double li, double ls ){
-  return - 1 / (ls - v) + 1 / (v - li);
-} 
-double glogjac2_v( double v, double alpha, double li, double ls ){
-  double x = - 1 / ((v - ls) * (v - ls)) - 1 / ((v - li) * (v - li));
-  return x;
-}
-double glogjac3_v( double v, double alpha, double li, double ls ){
-  
-  double x = - 2 / ( (ls - v) * (ls - v) * (ls - v) ) + 2 / ( (v - li) * (v - li) * (v - li) );
-  
-  return x ;
-}
 //#############################################################################
 double logpost_v( double e, vec l, int T, double alpha, double li, double ls ){
   
   double L = 0.0;
   double v = 0.5 * ( (ls - li) * tanh( 0.5 * alpha * e ) + (ls + li) );
-  
+  double mu = (2 / alpha) * atanh( (2 * mu_e - ls - li) / (ls - li) );
+
   //# log p( l|v )
   L += 0.5 * T * v * log( 0.5 * v  ) - T * log( tgamma( 0.5 * v )  );
   L += 0.5 * v * sum( log( l ) - l );
   //# log priori
-  L += ( a_v - 1 ) * log( v ) - b_v * v;
-  //# log Jacobiano: log(ls - v) + log(v - li)
-  L += log( jac_v( v, alpha, li, ls ) );
+  L += - 0.5 * ( (e - mu) / s_e ) * ( (e - mu) / s_e ); 
   
   return L;
 }
 double glogpost_v( double e, vec l, double inv_G, double dG_v, int T, double alpha, double li, double ls ){
   
   double v = 0.5 * ( (ls - li) * tanh( 0.5 * alpha * e ) + (ls + li) );
+  double dv = 0.25 * alpha * (ls - li) / (cosh(0.5 * alpha * e) * cosh(0.5 * alpha * e));
   double grad = 0.0;
-  
+  double mu = (2 / alpha) * atanh( (2 * mu_e - ls - li) / (ls - li) );
+
   //# log p( l|v )
   grad += 0.5 * T * log(0.5 * v) + 0.5 * T - 0.5 * T * R::psigamma(0.5 * v, 0);
   grad += 0.5 * sum(log( l ) - l);
-  //# log priori 
-  grad += (a_v - 1) / v - b_v;
-  //# log jacobiano
-  grad += glogjac_v( v, alpha, li, ls );
-  //# chain rule factor
-  grad *= jac_v( v, alpha, li, ls );
-  
+  // chain rule factor
+  grad *= dv;
+  // log priori 
+  grad += - (e - mu) / (s_e * s_e);
+  //cout << "e: " << e << endl; 
+  //cout << "dv: " << dv( e, alpha, li, ls ) << endl;
   //# Partial Energy function
   grad += - 0.5 * inv_G * dG_v;
   
@@ -591,31 +542,25 @@ double glogpost_v( double e, vec l, double inv_G, double dG_v, int T, double alp
 int G_v( double e, double &G, double &inv_G, double &dG_v, int T, double alpha, double li, double ls ){
   
   double v = 0.5 * ( (ls - li) * tanh( 0.5 * alpha * e ) + (ls + li) );
-  
+  double dv = 0.25 * alpha * (ls - li) / (cosh(0.5 * alpha * e) * cosh(0.5 * alpha * e));
+  double dv2 = - 0.25 * alpha * alpha * (ls - li) * sinh(0.5 * alpha * e);
+  dv2 /= (cosh(0.5 * alpha*e) * cosh(0.5 * alpha*e) * cosh(0.5 * alpha*e));
+
   G = 0.0;
   inv_G = 0.0;
   dG_v = 0.0;
-  double g = 0;
-  //# G  
-  double x = 0.5 * T / v - 0.25 * T * R::psigamma(0.5 * v, 1) - (a_v - 1)/ (v * v);
-  x += glogjac2_v( v, alpha, li, ls );
-  double y = (a_v - 1) / v - b_v + glogjac_v( v, alpha, li, ls );
-  //# G = - k0 * k0 * x - k1 * y
-  G += - jac_v( v, alpha, li, ls ) * jac_v( v, alpha, li, ls ) * x - jac2_v( v, alpha, li, ls ) * y;   
-  g = - jac_v( v, alpha, li, ls ) * jac_v( v, alpha, li, ls ) * x - jac2_v( v, alpha, li, ls ) * y;
-
-  if( std::isnan( g ) ) return -1;
-  //std::cout << G << std::endl;
   
-  //# inv_G
+  // log verossimilhança
+  G += - dv * dv * T * ( 0.5 / v - 0.25 * R::psigamma(0.5 * v, 1) );
+  // lof priori
+  G += 1 / (s_e * s_e);  
+  
+  // inv_G
   inv_G += 1 / G;
   
-  //# dG_v
-  dG_v += - 2 * jac_v( v, alpha, li, ls ) * gjac_v( v, alpha, li, ls ) * x;
-  dG_v += - ( jac_v( v, alpha, li, ls )*jac_v( v, alpha, li, ls ) ) * ( - 0.5 * T / ( v*v ) - 0.125 * T * R::psigamma(0.5 * v, 2) + 2 * (a_v - 1) / ( v*v*v ) + glogjac3_v( v, alpha, li, ls ) );
-  dG_v += - gjac2_v( v, alpha, li, ls ) * y;
-  dG_v += - jac2_v( v, alpha, li, ls ) * ( - (a_v - 1)/ (v * v) + glogjac2_v( v, alpha, li, ls ) );
-  dG_v *= jac_v( v, alpha, li, ls ); 
+  // dG_v
+  dG_v += - 2 * dv * dv2 * T * ( 0.5 / v - 0.25 * R::psigamma(0.5 * v, 1) );
+  dG_v += ( dv * dv * dv ) * T * ( 0.5 / (v*v) + 0.125 *  R::psigamma(0.5 * v, 2) );
     
   return 1;
 }
@@ -623,329 +568,13 @@ double nuH_v(double dG_v, double inv_G, double p){
   
     double iGp = inv_G * p;
     double nuH = iGp * dG_v * iGp;
-            
+    //cout << "dG_v: " << dG_v << endl;    
     return nuH;
 }
 double gradHmom_v(double inv_G, double p){
     return inv_G * p;
 }
 double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc, double alpha, double li, double ls ){
-    
-    //double theta2p = 0.0;
-    double e = 0.0;
-    double inv_G = 0.0;
-    double dG_v = 0.0;
-    double G = 0.0;
-    int gcond = 0;
-
-    gcond = G_v( e_cur, G, inv_G, dG_v, T, alpha, li, ls );
-    if( gcond == -1 ) return e_cur;
-    
-    double pcur =  G * randn( );
-   
-    double aux = pcur * inv_G * pcur;
-    double pa = 0.0;
-    double pb = 0.0;
-    double pc = pcur;
-    double gdpth2;
-    double gdmom1;
-    double gdmom2;
-    
-    double uMH = 0.0;
-    double aMH = 0.0;
-
-    double HMtheta1 = - logpost_v( e_cur, l, T, alpha, li, ls ) + 0.5 * log(  G  ) + 0.5 * aux;
-    double HMthetaf = 0.0;
-
-    double gradHMCth2 = 0.0;
-    double theta2c = e_cur;
-    double theta2a;
-    double theta2b;
-    theta2a = theta2c;
-    pa = pc;
-    
-    for (int jgl = 1 ; jgl < L + 1 ; jgl++ ){
-
-    	gdpth2 = glogpost_v( theta2a, l, inv_G, dG_v, T, alpha, li, ls );
-    	gradHMCth2 = gdpth2 - 0.5 * nuH_v(dG_v, inv_G, pa);
-    
-    	for(int jfix = 1 ; jfix < fixp + 1 ; jfix++ ){
-    		pb = pa - 0.5 * eps * gradHMCth2;
-     		gradHMCth2 = gdpth2 - 0.5 * nuH_v( dG_v, inv_G, pb);
-    	}
-    
-    	gcond = G_v( theta2a, G, inv_G, dG_v, T, alpha, li, ls );
-    	if( gcond == -1 ) return e_cur;
-
-      gdmom1 = gradHmom_v( inv_G, pb );
-    	gdmom2 = gradHmom_v( inv_G, pb );
-    
-    	for(int jfix = 1 ; jfix < fixp + 1 ; jfix++ ){
-    		theta2b = theta2a + 0.5 * eps * gdmom1 + 0.5 * eps * gdmom2;
-    		gcond = G_v( theta2b, G, inv_G, dG_v, T, alpha, li, ls );
-        if( gcond == -1 ) return e_cur;
-    		gdmom2 = gradHmom_v( inv_G, pb );
-    	}
-    
-    	gdpth2 = glogpost_v( theta2b, l, inv_G, dG_v, T, alpha, li, ls );
-    	gradHMCth2 = gdpth2 - 0.5 * nuH_v( dG_v, inv_G, pb);
-    	pb = pb - 0.5 * eps * gradHMCth2;
-    	pa = pb;
-    	theta2a = theta2b;
-    }
-
-    aux = pb * inv_G * pb;
-
-    HMthetaf = - logpost_v( theta2b, l, T, alpha, li, ls ) + 0.5 * log(  G  ) + 0.5 * aux;
-    uMH = randu( distr_param( 0, 1 ) );
-
-    aMH = std::min( 1.0, exp( - HMthetaf + HMtheta1 ) );
-
-    if( uMH < aMH ){
-    	e += theta2b;
-    	acc++;
-    }
-    else{
-    	e += e_cur;
-    }
-
-    return e;
-}
-/*
-//#############################################################################
-//#############################################################################
-//########################## v.1
-//######## Transformação: T(v) = e                         ############
-//######## e = log( v )
-double logpost_v(double e, vec l, int T){
-  
-  double L = 0.0;
-  double v = exp( e );
-  
-  L += 0.5 * T * v * log( 0.5 * v  ) - T * log( tgamma( 0.5 * v )  );
-  L += 0.5 * v * sum( log( l ) - l );
-  // priori
-  L += ( a_v - 1 ) * log( v ) - b_v * v;
-  // log Jacobiano
-  L += e;
-  
-  return L;
-}
-double glogpost_v(double e, vec l, double inv_G, double dG_v, int T){
-  
-  double v = exp( e );
-  double grad = 0.0;
-    
-  grad += 0.5 * T * v * log(0.5 * v) + 0.5 * T * v - 0.5 * T * v * R::digamma(0.5 * v);
-  grad += 0.5 * v * sum( log(l) - l ); 
-  grad += ( a_v - 1 ) - b_v * v;
-  // log jacobiano
-  grad += 1;
-  
-  // Partial Energy function
-  grad -= 0.5 * inv_G * dG_v ;
-    
-  return - grad;
-}
-int G_v(double e, double &G, double &inv_G, double &dG_v, int T){
-   
-  double v = exp( e );
-   
-  G = 0.0;
-  inv_G = 0.0;
-  dG_v = 0.0;
-    
-  G += 0.25 * T * v * v * R::psigamma(0.5 * v, 1);
-  G +=  v * b_v - 0.5 * T * v;
-  
-  inv_G += 1 / G;
-  
-  dG_v += 0.5 * T * v * v * R::psigamma(0.5 * v, 1);
-  dG_v += 0.125 * T * v * v * v * R::psigamma(0.5 * v, 2);
-  dG_v += b_v * v - 0.5 * T * v;
-  	  
-  return 1;
-}
-double nuH_v(double dG_v, double inv_G, double p){
-  
-    double iGp = inv_G * p;
-    double nuH = iGp * dG_v * iGp;
-            
-    return nuH;
-}
-double gradHmom_v(double inv_G, double p){
-    return inv_G * p;
-}
-double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc){
-    
-    //double theta2p = 0.0;
-    double e = 0.0;
-    double inv_G = 0.0;
-    double dG_v = 0.0;
-    double G = 0.0;
-    
-    G_v( e_cur, G, inv_G, dG_v, T );
-    double pcur =  G * randn( );
-   
-    double aux = pcur * inv_G * pcur;
-    double pa = 0.0;
-    double pb = 0.0;
-    double pc = pcur;
-    double gdpth2;
-    double gdmom1;
-    double gdmom2;
-    
-    double uMH = 0.0;
-    double aMH = 0.0;
-
-    double HMtheta1 = - logpost_v( e_cur, l, T ) + 0.5 * log(  G  ) + 0.5 * aux;
-    double HMthetaf = 0.0;
-
-    double gradHMCth2 = 0.0;
-    double theta2c = e_cur;
-    double theta2a;
-    double theta2b;
-    theta2a = theta2c;
-    pa = pc;
-    
-    for (int jgl = 1 ; jgl < L + 1 ; jgl++ ){
-
-    	gdpth2 = glogpost_v( theta2a, l, inv_G, dG_v, T );
-    	gradHMCth2 = gdpth2 - 0.5 * nuH_v(dG_v, inv_G, pa);
-    
-    	for(int jfix = 1 ; jfix < fixp + 1 ; jfix++ ){
-    		pb = pa - 0.5 * eps * gradHMCth2;
-     		gradHMCth2 = gdpth2 - 0.5 * nuH_v( dG_v, inv_G, pb);
-    	}
-    
-    	G_v( theta2a, G, inv_G, dG_v, T );
-    	gdmom1 = gradHmom_v( inv_G, pb );
-    	gdmom2 = gradHmom_v( inv_G, pb );
-    
-    	for(int jfix = 1 ; jfix < fixp + 1 ; jfix++ ){
-    		theta2b = theta2a + 0.5 * eps * gdmom1 + 0.5 * eps * gdmom2;
-    		G_v( theta2b, G, inv_G, dG_v, T );
-    		gdmom2 = gradHmom_v( inv_G, pb );
-    	}
-    
-    	gdpth2 = glogpost_v( theta2b, l, inv_G, dG_v, T );
-    	gradHMCth2 = gdpth2 - 0.5 * nuH_v( dG_v, inv_G, pb);
-    	pb = pb - 0.5 * eps * gradHMCth2;
-    	pa = pb;
-    	theta2a = theta2b;
-    }
-
-    aux = pb * inv_G * pb;
-
-    HMthetaf = - logpost_v( theta2b, l, T ) + 0.5 * log(  G  ) + 0.5 * aux;
-    uMH = randu( distr_param( 0, 1 ) );
-
-    aMH = std::min( 1.0, exp( - HMthetaf + HMtheta1 ) );
-
-    if( uMH < aMH ){
-    	e += theta2b;
-    	acc++;
-    }
-    else{
-    	e += e_cur;
-    }
-
-    return e;
-}
-
-####
-double logpost_v(double e, vec l, int T, double alpha, double li, double ls){
-  
-  double L = 0.0;
-  double v = 0.5 * ( (ls - li) * tanh( 0.5 * alpha * e ) + (ls + li) );
-  
-  L += 0.5 * T * v * log( 0.5 * v  ) - T * log( tgamma( 0.5 * v )  );
-  L += 0.5 * v * sum( log( l ) - l ) - sum( log( l ) );
-  // priori
-  L += (a_v - 1) * log( v ) - b_v * v;
-  // log Jacobiano
-  L += log(ls - v) + log(v - li);
-  
-  return L;
-}
-double glogpost_v(double e, vec l, double inv_G, double dG_v, int T, double alpha, double li, double ls){
-  
-  double v = 0.5 * ( (ls - li) * tanh( 0.5 * alpha * e ) + (ls + li) );
-  double grad = 0.0;
-
-  grad += 0.5 * T * log(0.5 * v) + 0.5 * T - 0.5 * T * R::psigamma(0.5 * v, 0);
-  grad += 0.5 * sum(log( l ) - l);
-  // priori 
-  // grad += (a_v - 1) * log( v ) - b_v * v;
-  grad += (a_v - 1) / v - b_v;
-  // log jacobiano
-  //grad += log(ls - v) + log(v - li);
-  grad += 1 / (v - ls) + 1 / (v - li);
-  // chain rule factor
-  grad *= alpha * (ls - v) * (v - li) / (ls - li); 
-
-  // Partial Energy function
-  grad -= 0.5 * inv_G * dG_v ;
-    
-  return - grad;
-}
-int G_v(double e, double &G, double &inv_G, double &dG_v, int T, double alpha, double li, double ls){
-   
-  double v = 0.5 * ( (ls - li) * tanh( 0.5 * alpha * e ) + (ls + li) );
-  double x, y; 
-  G = 0.0;
-  inv_G = 0.0;
-  dG_v = 0.0;
-    
-  double w = (2 * v - ls - li) / (ls - li);
-  double k0 = alpha * (ls - v) * (v - li) / (ls - li);
-  double k1 = - alpha * w * k0;
-  
-  x = 0.5 * T / v  - 0.25 * T * R::psigamma(0.5 * v, 1);
-  x = x - (a_v - 1) / (v * v);
-  x = x - 1 / ((ls - v) * (ls - v)) - 1 / ((v - li) * (v - li)); 
-  
-  //x =  k0 * k0 * x
-  y = k1 * ((a_v - 1) / v - b_v - 1 / (ls - v) + 1 / (v - li));
-
-  G += - k0 * k0 * x - k1 * y;
-
-  //G -= k0 * k0 * (0.5 * T / v - 0.25 * T * R::psigamma(0.5 * v, 1));
-  //G += k0 * k0 * ((a_v - 1) / ( v * v ) + 1 / ((v - ls) * (v - ls)) + 1 / ((v - li) * (v - li)) );
-  //G -= k1 * ((a_v - 1) / v - b_v + 1 / (v - ls) + 1 / (v - li));
-
-  //G += 0.25 * T * v * v * R::psigamma(0.5 * v, 1);
-  //G +=  v * b_v - 0.5 * T * v;
-  
-  inv_G += 1 / G;
-  
-  double k2 = - alpha * w;
-  double k3 = - alpha * alpha * (6 * v * (ls + li - v) - (ls - li) * (ls - li) - 2 * ls * li) / ((ls - li) * (ls - li)); 
-
-  dG_v -= 2 * k2 * (0.5 * T * v - 0.25 * T * R::psigamma(0.5 * v, 1));
-  dG_v += 2 * k2 * ((a_v - 1) / ( v * v ) + 1 / ((v - ls) * (v - ls)) + 1 / ((v - li) * (v - li)));
-  dG_v -= k0 * k0 * (- 0.5 * T / ( v * v ) - 0.125 * R::psigamma(0.5 * v, 2));
-  dG_v -= 2 * k0 * k0 * ( (a_v - 1) / ( v * v * v ) + 1 / ( (v - ls) * (v - ls) * (v - ls) ) + 1 / ((v - li) * (v - li) * (v - li)) );
-  dG_v -= k3 * ( (a_v - 1) / v - b_v + 1 / (v - ls) + 1 / (v - li) );
-  dG_v += k1 * k1 * ( (a_v - 1) / (v * v) - 1 / ((v - ls) * (v - ls)) - 1 / ((v - li) * (v - li)) );
-
-  //dG_v += 0.5 * T * v * v * R::psigamma(0.5 * v, 1);
-  //dG_v += 0.125 * T * v * v * v * R::psigamma(0.5 * v, 2);
-  //dG_v += b_v * v - 0.5 * T * v;
-  	  
-  return 1;
-}
-double nuH_v(double dG_v, double inv_G, double p){
-  
-    double iGp = inv_G * p;
-    double nuH = iGp * dG_v * iGp;
-            
-    return nuH;
-}
-double gradHmom_v(double inv_G, double p){
-    return inv_G * p;
-}
-double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc, double alpha, double li, double ls){
     
     //double theta2p = 0.0;
     double e = 0.0;
@@ -971,20 +600,23 @@ double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc
     double HMthetaf = 0.0;
 
     double gradHMCth2 = 0.0;
-    double theta2c = e_cur;
+    //double theta2c = e_cur;
     double theta2a;
-    double theta2b;
-    theta2a = theta2c;
+    double theta2b = 0.0;
+    theta2a = e_cur;
     pa = pc;
     
     for (int jgl = 1 ; jgl < L + 1 ; jgl++ ){
 
     	gdpth2 = glogpost_v( theta2a, l, inv_G, dG_v, T, alpha, li, ls );
+      //cout << gdpth2 << endl;
     	gradHMCth2 = gdpth2 - 0.5 * nuH_v(dG_v, inv_G, pa);
-    
+      //cout << nuH_v(dG_v, inv_G, pa) << endl;
+
     	for(int jfix = 1 ; jfix < fixp + 1 ; jfix++ ){
     		pb = pa - 0.5 * eps * gradHMCth2;
      		gradHMCth2 = gdpth2 - 0.5 * nuH_v( dG_v, inv_G, pb);
+        //cout << nuH_v(dG_v, inv_G, pb) << endl;
     	}
     
     	G_v( theta2a, G, inv_G, dG_v, T, alpha, li, ls );
@@ -998,7 +630,9 @@ double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc
     	}
     
     	gdpth2 = glogpost_v( theta2b, l, inv_G, dG_v, T, alpha, li, ls );
+      //cout << gdpth2 << endl;
     	gradHMCth2 = gdpth2 - 0.5 * nuH_v( dG_v, inv_G, pb);
+      //cout << nuH_v( dG_v, inv_G, pb) << endl;
     	pb = pb - 0.5 * eps * gradHMCth2;
     	pa = pb;
     	theta2a = theta2b;
@@ -1021,9 +655,6 @@ double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc
 
     return e;
 }
-*/
-
-
 //#############################################################################
 //########################## h
 double logpost_h(vec h, vec theta, vec b, vec l, int T, vec y_T){
