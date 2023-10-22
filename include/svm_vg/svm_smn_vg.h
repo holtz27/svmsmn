@@ -35,24 +35,16 @@ vec nuH_b(mat dG_b0, mat dG_delta, mat dG_b2, mat inv_G, vec p);
 vec rmhmc_b(vec b_cur, vec h, vec l, int fixp, int L, vec eps, int T, vec y_T , int &acc);
 
 // v
-//
-double jac_v( double v, double alpha, double li, double ls );
-double jac2_v( double v, double alpha, double li, double ls );
-double gjac_v( double v, double alpha, double li, double ls );
-double gjac2_v( double v, double alpha, double li, double ls );
-double glogjac_v( double v, double alpha, double li, double ls );
-double glogjac2_v( double v, double alpha, double li, double ls );
-double glogjac3_v( double v, double alpha, double li, double ls );
 // Model functions
 double logpost_v(double e, vec l, int T, double alpha, double li, double ls);
-double glogpost_v(double e, vec l, int T, double alpha, double li, double ls);
+double glogpost_v(double e, vec l, double inv_G, double dG_v, int T, double alpha, double li, double ls);
 // Metrics
 int G_v(vec e, double &G, double &inv_G, double &dG_v, int T, double alpha, double li, double ls);
 // Energy functions
 double nuH_v(double dG_v, double inv_G, double p);
 double gradHmom_v(double inv_G, double p);
 // hmc update
-double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc, double alpha, double li, double ls);
+double rmhmc_v(double e_cur, vec l, int fixp, int L, double eps, int T, int &acc, double alpha, double li, double ls );
 
 // l
 double logpost_l(vec z, double e, vec b, vec h, int T, vec y_T, double alpha, double li, double ls);
@@ -68,3 +60,4 @@ vec glogpost_h(vec h, vec theta, vec b, vec l, int T, vec y_T);
 vec hmc_h(vec h_cur, vec theta, vec b, vec l, int L, double eps, int T, vec y_T, int &acc);
 
 #endif // SVM_SMN_VG_H_INCLUDED
+
