@@ -1,0 +1,8 @@
+ibovespa
+
+       		dic      	loo     	waic
+normal		8057.633 	8078.094 	8075.364		
+ts 		    		
+slash 		8039.211 	8071.249 	8055.441
+vgamma
+
