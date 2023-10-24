@@ -1,6 +1,6 @@
 // [[Rcpp::depends( RcppArmadillo )]]
 
-#include "svm_smn_t.h"
+#include "svm_smn.h"
 
 //#############################################################################
 //########################## rtgamma
@@ -23,20 +23,27 @@ double rtgamma( double min, double max, double shape, double scale ){
   return x[ 0 ];
 }
  */
-double rtgamma( double li, double ls, double shape, double scala ){
+//#############################################################################
+//########################## rtgamma
+double rtgamma( double li, double ls, double shape, double rate, int msn_erro ){
   
   double tg;
+  double scale = 1.0 / rate;
   
-  tg = R::pgamma( ls, shape, scala, true, false );
-  tg -= R::pgamma( li, shape, scala, true, false );
+  tg = R::pgamma( ls, shape, scale, true, false );
+  tg -= R::pgamma( li, shape, scale, true, false );
   tg *= R::runif( 0, 1 );
-  tg += R::pgamma( li, shape, scala, true, false );
-  tg = R::qgamma( tg, shape, scala, true, false );
+  tg += R::pgamma( li, shape, scale, true, false );
+  tg = R::qgamma( tg, shape, scale, true, false );
   
-  return tg;
+  if( std::isnan( tg ) ){
+    cout << "shape: " << shape << " " << "rate: " << rate << endl;
+    if( msn_erro == 0 ) stop( "Erro em v_cur!" );
+      else stop( "Erro em l_cur!" );
+  }else return tg;
 }
 //########################## l
-vec l_gibbs(double v, vec y_T, vec h, vec b, int T){
+vec l_gibbs( double v, vec y_T, vec h, vec b, int T ){
   
   double b0 = b[0];
   double b1 = tanh( b[1] ); 
@@ -46,14 +53,26 @@ vec l_gibbs(double v, vec y_T, vec h, vec b, int T){
   
   vec aux = y_T.subvec( 1, T ) - b0 - b1 * y_T.subvec( 0, T - 1 ) - b2 * exp( h );
   vec u = 0.5 * exp( - h ) % aux % aux;
+
   // scale = 1 / rate
   
   for( int i = 0 ; i < T ; i++ ){
-
-   l_out[ i ] = rtgamma( 0.0, 1.0, v + 0.5, 1.0 / u[ i ] );
     
+    l_out[ i ] = rtgamma( 0.0, 
+                          1.0, 
+                          v + 0.5, 
+                          u[ i ],
+                          1 );                       
   }
   
+  //vec test = - log( l_out );
+  //if( test.has_inf() ) cout << "l_out[ " << find_nonfinite( test ) << " ] = " << l_out( find_nonfinite( test ) ) << endl;
+
+  if( log( l_out ).has_inf() ){
+    cout << "Houve inf!" << endl;
+    l_out.replace( 0.0, 0.5 );
+  } 
+
   return l_out;
   
 }
@@ -67,7 +86,7 @@ void set_seed( int seed ){
 List svm_s(int N, 
            int L_theta, vec eps_theta, 
            int L_b, vec eps_b, 
-           int L_h, double eps_h, 
+           int L_h, double eps_h,
            vec y_T, 
            int seed ){
   
@@ -81,34 +100,34 @@ List svm_s(int N,
   // iniciando theta
   int acc_theta = 0;
   vec theta_cur = zeros<vec>(3, 1);
-  theta_cur[ 0 ] += 0.005;
+  theta_cur[ 0 ] += 0.1;
   theta_cur[ 1 ] += 0.5 * ( log( 1 + 0.98 ) - log( 1 - 0.98 ) );
-  theta_cur[ 2 ] += log( sqrt( 0.017 ) );
+  theta_cur[ 2 ] += log( 0.15 );
   
   // iniciando h
   int acc_b = 0;
   vec h_cur = zeros<vec>(T, 1);
-  h_cur[ 0 ] += 0.005 + sqrt( 0.03 ) / (1 - 0.95 * 0.95 ) * randn();
+  h_cur[ 0 ] += 0.1 + 0.15 / sqrt(1 - 0.98 * 0.98 ) * randn();
   for( int kt = 1 ; kt < T ; kt++ ){
-    h_cur[ kt ] += 0.005 + 0.95 * ( h_cur[ kt - 1 ] -0.005 ) + sqrt( 0.03 ) * randn();
+    h_cur[ kt ] += 0.1 + 0.98 * ( h_cur[ kt - 1 ] - 0.1 ) + 0.15 * randn();
   }
   
   // iniciando b
   int acc_h = 0;
   vec b_cur = zeros<vec>(3, 1);
-  b_cur[ 0 ] += 0.3;
+  b_cur[ 0 ] += 0.1;
   b_cur[ 1 ] += 0.5 * ( log( 1 + 0.03 ) - log( 1 - 0.03 ) );
-  b_cur[ 2 ] += -0.025;
+  b_cur[ 2 ] += -0.10;
   
   // iniciando v
-  double v_cur = 5.0;
-
+  double v_cur = 2.0;
+  
   // iniciando l
   vec l_cur = zeros<vec>(T, 1);
   for( int k = 0 ; k < T ; k++ ){
     l_cur[ k ] = R::rbeta( v_cur, 1.0 );
   }
-  
+    
   // iniciando cadeia
   mat chain_theta = zeros<mat>( 3, N + 1 );
   chain_theta.col( 0 ) += theta_cur;
@@ -131,10 +150,10 @@ List svm_s(int N,
     theta_cur = rmhmc_theta( theta_cur, h_cur, 5, L_theta, eps_theta, T, acc_theta );
     b_cur = rmhmc_b( b_cur, h_cur, l_cur, 5, L_b, eps_b, T, y_T , acc_b );
     h_cur = hmc_h( h_cur, theta_cur, b_cur, l_cur, L_h, eps_h, T, y_T, acc_h );
-    v_cur = rtgamma( 1.0, R_PosInf, T + 0.08, 1.0 / (0.04 - sum( log(l_cur) )) );
-    //v_cur = rtgamma( 1.0, 40.0, T + 0.08, 1.0 / (0.04 - sum( log(l_cur) )) );
-    l_cur = l_gibbs(v_cur, y_T, h_cur, b_cur, T);
-   
+    //v_cur = rtgamma( 1.0, R_PosInf, T + 0.08, 1.0 / (0.04 - sum( log(l_cur) )), 0 );
+    v_cur = rtgamma( 1.0, R_PosInf, T + 0.08, (0.04 - sum( log(l_cur) )), 0 );
+    l_cur = l_gibbs( v_cur, y_T, h_cur, b_cur, T );
+    
     // chain update 
     chain_theta.col( it ) += theta_cur;
     chain_b.col( it ) += b_cur;
@@ -150,7 +169,7 @@ List svm_s(int N,
   chain_theta.row( 1 ) = tanh( chain_theta.row( 1 ) );
   chain_theta.row( 2 ) = exp( chain_theta.row( 2 ) );
   chain_b.row( 1 )     = tanh( chain_b.row( 1 ) );
-  
+    
   List chain = List::create( Named("chain_theta") = chain_theta,
                              Named("chain_b") = chain_b,
                              Named("chain_h") = chain_h,
@@ -163,6 +182,9 @@ List svm_s(int N,
   acc[ 2 ] += acc_h;
   
   double time = timer.toc();
+  
+  Rcout << "\nTempo decorrido: " << time / 60 << " min" << endl;
+  Rcout << "\nTaxas aceitação:\n" << acc / N << endl;
   
   return List::create( Named("chain") = chain, 
                        Named("acc") = acc, 
