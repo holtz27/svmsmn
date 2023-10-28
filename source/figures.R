@@ -28,26 +28,26 @@ trace_plots = function(draws, burn = 0, lags = 1, names, lag.max = 100){
   par(mfrow = c(1,1))
 }
 
-abs_plots = function( draws_h, burn = 0, lags = 1, date = NULL, y ){
+abs_plots = function( draws_h, burn = 0, lags = 1, dates = NULL, y ){
   if( !require(ggplot2) ) install.packages("ggplot2")
   library(ggplot2)
   
   Draws_h = draws_h
-  N = ncol( Draws_h ) 
-  if( burn != 0 ) Draws_h = Draws_h[, -c( 1:burn )]
+  N = ncol( Draws_h )
+  if( (burn != 0) ) Draws_h = Draws_h[, -c( 1:burn )]
   jumps = seq(1, N - burn, by = lags)
   Draws_h = Draws_h[, jumps ]
   
-  if( is.null(date) ) date = seq.Date(from = Sys.Date(), 
-                                      length.out = length(y), 
-                                      by = 'day')
+  if( is.null(dates) ) dates = seq.Date(from = Sys.Date(), 
+                                        length.out = length(y), 
+                                        by = 'day')
   
   e.vol_hat = apply( exp( 0.5 * Draws_h ) , MARGIN = 1, FUN = mean )
   e.vol_min = apply( exp( 0.5 * Draws_h ) , MARGIN = 1, FUN = quantile, probs = c(0.025) )
   e.vol_max = apply( exp( 0.5 * Draws_h ) , MARGIN = 1, FUN = quantile, probs = c(0.975) )
   data = matrix(c(abs( y ), e.vol_hat, e.vol_min, e.vol_max), ncol = 4)
   data = data.frame(data)
-  data = cbind( date, data )
+  data = cbind( dates, data )
   names(data) = c('date', 'y.abs', 'e.hat', 'e.min','e.max')
   h = ggplot(data)
   h = h + geom_line(aes(date, y.abs), color = 'grey70')
@@ -58,9 +58,10 @@ abs_plots = function( draws_h, burn = 0, lags = 1, date = NULL, y ){
   h = h + theme(axis.title.y = element_text(size = 18),
                 axis.text.x = element_text(size = 16),
                 axis.text.y = element_text(size = 18))
-  h = h + xlim(as.Date(c(date[1], tail(date, 1) ) ) )
+  h = h + xlim(as.Date(c(dates[1], tail(dates, 1) ) ) )
   h
 }
+
 
 tail_plot = function(draws_l, burn = 0, lags = 1, date = NULL, model_name){
   if( !require(ggplot2) ) install.packages("ggplot2")
