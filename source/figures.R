@@ -11,9 +11,18 @@ trace_plots = function(draws, burn = 0, lags = 1, names, lag.max = 100){
   layout( mat )
   
   for(i in 1:n){
-    plot( Draws[i, ], type = 'l', main = names[i], xlab = '', ylab = '')
-    plot(acf( Draws[i, ], lag.max = lag.max, plot = FALSE)[1:lag.max], main ='', xlab = '', ylab = 'ACF')
-    plot(density( Draws[i, ] ), main ='', xlab = '', ylab = '')
+    plot( Draws[i, ], type = 'l', 
+          main = names[ i ], 
+          xlab = '', ylab = '', 
+          cex.main = 2.5, 
+          cex.axis = 1.5)
+    plot(acf( Draws[i, ], 
+              lag.max = lag.max, plot = FALSE)[1:lag.max], 
+         main ='', xlab = '', ylab = 'ACF', 
+         cex.lab = 1.3, 
+         cex.axis = 1.5)
+    plot(density( Draws[i, ] ), main ='', xlab = '', ylab = '', 
+         cex.axis = 1.5)
   }
   
   par(mfrow = c(1,1))
