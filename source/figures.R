@@ -55,9 +55,9 @@ abs_plots = function( draws_h, burn = 0, lags = 1, dates = NULL, y ){
                       fill = 'blue' ,alpha = 0.2)
   h = h + geom_line(aes(date, e.hat), linewidth = 0.75)
   h = h + theme_test() + xlab('') + ylab('|Retornos|')
-  h = h + theme(axis.title.y = element_text(size = 18),
-                axis.text.x = element_text(size = 16),
-                axis.text.y = element_text(size = 18))
+  h = h + theme(axis.title.y = element_text(size = 26),
+                axis.text.x = element_text(size = 24),
+                axis.text.y = element_text(size = 26))
   h = h + xlim(as.Date(c(dates[1], tail(dates, 1) ) ) )
   h
 }
