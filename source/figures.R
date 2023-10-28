@@ -63,31 +63,32 @@ abs_plots = function( draws_h, burn = 0, lags = 1, dates = NULL, y ){
 }
 
 
-tail_plot = function(draws_l, burn = 0, lags = 1, date = NULL, model_name){
+tail_plot = function(draws_l, burn = 0, lags = 1, dates = NULL, model_name){
   if( !require(ggplot2) ) install.packages("ggplot2")
   library(ggplot2)
   if( !require(latex2exp) ) install.packages("latex2exp")
   library(latex2exp)
   
-  Draws_l = draws_l
+  Draws_l = draws_l[, -1]
   N = ncol( Draws_l ) 
   if( burn != 0 ) Draws_l = Draws_l[, -c( 1:burn )]
   jumps = seq(1, N - burn, by = lags)
   Draws_l = Draws_l[, jumps ]
   
-  if( is.null(date) ) date = seq.Date(from = Sys.Date(), 
-                                      length.out = length(Draws_l), 
-                                      by = 'day')
+  if( is.null(dates) ) dates = seq.Date(from = Sys.Date(), 
+                                        length.out = nrow( Draws_l ), 
+                                        by = 'day')
   
   l_hat = apply(Draws_l, MARGIN = 1, mean)
-  df = data.frame(date = date, l = l_hat)
-  h = ggplot(df) + geom_line(aes(x=date, y = l)) 
+  df = data.frame(dates = dates, l = l_hat)
+  
+  h = ggplot( df ) + geom_line(aes( x = dates, y = l )) 
   h = h + theme_test() + xlab('')
   #h = h + scale_x_date(date_breaks = '7 year', date_labels = '%Y')
   h = h + ylab(TeX(paste0('SVM-', model_name, ': ', '$\\lambda_{t}$')))
   h = h + theme(axis.title.y = element_text(size = 18),
                 axis.text.x = element_text(size = 14),
                 axis.text.y = element_text(size = 14))
-  h = h + xlim(as.Date(c(date[1], tail(date, 1) ) ) )
+  h = h + xlim(as.Date(c(dates[1], tail(dates, 1) ) ) )
   h
 }
