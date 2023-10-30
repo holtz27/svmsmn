@@ -1,28 +1,89 @@
 // [[Rcpp::depends( RcppArmadillo )]]
+// [[Rcpp::depends( RcppGSL )]]
 
 #include "svm_smn.h"
+//#include <gsl/gsl_cdf.h>
 
 //#############################################################################
 //########################## rtgamma
-/*
-double rtgamma( double min, double max, double shape, double scale ){
+
+double right_tgamma(double max, double shape, double rate){
+
+  // G <- get(paste("p", spec, sep = ""), mode = "function")
+  // G is the cdf function 
+  // G = R::pgamma( p, shape, scale, lower, log )
+  // Gin <- get(paste("q", spec, sep = ""), mode = "function")
+  // Gin is the inverse cdf function 
+  // Gin = R::qgamma( q, shape, scale, lower, log )
+  // tt = Gin(G(a, ...) + p*(G(b, ...) - G(a, ...)), ...)
   
-  Environment pkg = Environment::namespace_env("truncdist");
-  Function f = pkg["rtrunc"];
+  double scale = 1 / rate;
+
+  if( max <= 0 )
+    stop( "argumnto b é menor ou igual a 0!" );
   
-  NumericVector x;
-  x = f( 1, 
-         Named("spec") = "gamma", 
-         _["a"] = min, 
-         _["b"] = max, 
-         _["shape"] = shape, 
-         _["scale"] = scale);
+  double rtg, q, log_Gb;
   
-  //Rcout << shape << " " << scale << endl;
+  if( max != R_PosInf )
+    log_Gb = R::pgamma( max, shape, scale, true, true ); 
+    if( std::isinf( log_Gb ) )
+      stop( "Trunction interval is not inside the domain of the quantile function" );
+ 
+  double u = R::runif( 0, 1 );
+  double x = R::qgamma( log( u ) + log_Gb, shape, scale, true, true );
+
+  return x;
   
-  return x[ 0 ];
 }
- */
+
+double qtrunc( double p, double a, double b, double shape, double scale, int msn_erro ){
+  
+  // G <- get(paste("p", spec, sep = ""), mode = "function")
+  // G is the cdf function 
+  // G = R::pgamma( p, shape, scale, lower, log )
+  // Gin <- get(paste("q", spec, sep = ""), mode = "function")
+  // Gin is the inverse cdf function 
+  // Gin = R::qgamma( q, shape, scale, lower, log )
+  // tt = Gin(G(a, ...) + p*(G(b, ...) - G(a, ...)), ...)
+  
+  if( a >= b )
+    stop( "argument a is greater than or equal to b" );
+  
+  double tt, q, Ga = 0.0, Gb = 1.0, log_Ga, log_Gb;
+  
+  if( a != 0 ) 
+    Ga = R::pgamma( a, shape, scale, true, false );
+    log_Ga = R::pgamma( a, shape, scale, true, true );
+    //Ga = gsl_cdf_gamma_P( a, shape, scale );
+
+  if( b != R_PosInf ) 
+    Gb = R::pgamma( b, shape, scale, true, false );
+    log_Gb = R::pgamma( b, shape, scale, true, true );
+    //Gb = gsl_cdf_gamma_P( b, shape, scale );
+
+  if( log_Ga == log_Gb ){ 
+    cout << Gb << " " << log_Gb << endl;
+    stop( "Trunction interval is not inside the domain of the quantile function" );  
+  }
+  
+  if( msn_erro == 1 ) 
+    tt = R::qgamma( log( p ) + log_Gb, shape, scale, true, true );
+  else
+    q = Ga + p * ( Gb - Ga );
+    tt = R::qgamma( q, shape, scale, true, false );
+
+  return tt;
+} 
+double rtgamma( double min, double max, double shape, double rate, int msn_erro ){
+  
+  double scale = 1 / rate;
+  double u = R::runif( 0, 1 );
+  double x = qtrunc( u, min, max, shape, scale, msn_erro );
+  
+  return x;
+  
+}
+/*
 //#############################################################################
 //########################## rtgamma
 double rtgamma( double li, double ls, double shape, double rate, int msn_erro ){
@@ -42,6 +103,7 @@ double rtgamma( double li, double ls, double shape, double rate, int msn_erro ){
       else stop( "Erro em l_cur!" );
   }else return tg;
 }
+*/
 //########################## l
 vec l_gibbs( double v, vec y_T, vec h, vec b, int T ){
   
@@ -55,23 +117,9 @@ vec l_gibbs( double v, vec y_T, vec h, vec b, int T ){
   vec u = 0.5 * exp( - h ) % aux % aux;
 
   // scale = 1 / rate
-  
-  for( int i = 0 ; i < T ; i++ ){
-    
-    l_out[ i ] = rtgamma( 0.0, 
-                          1.0, 
-                          v + 0.5, 
-                          u[ i ],
-                          1 );                       
-  }
-  
-  //vec test = - log( l_out );
-  //if( test.has_inf() ) cout << "l_out[ " << find_nonfinite( test ) << " ] = " << l_out( find_nonfinite( test ) ) << endl;
-
-  if( log( l_out ).has_inf() ){
-    cout << "Houve inf!" << endl;
-    l_out.replace( 0.0, 0.5 );
-  } 
+  for( int i = 0 ; i < T ; i++ ) 
+    //l_out[ i ] = rtgamma( 0.0, 1.0, v + 0.5, u[ i ], 1 );
+    l_out[ i ] = right_tgamma( 1.0, v + 0.5, u[ i ] );
 
   return l_out;
   
@@ -150,7 +198,6 @@ List svm_s(int N,
     theta_cur = rmhmc_theta( theta_cur, h_cur, 5, L_theta, eps_theta, T, acc_theta );
     b_cur = rmhmc_b( b_cur, h_cur, l_cur, 5, L_b, eps_b, T, y_T , acc_b );
     h_cur = hmc_h( h_cur, theta_cur, b_cur, l_cur, L_h, eps_h, T, y_T, acc_h );
-    //v_cur = rtgamma( 1.0, R_PosInf, T + 0.08, 1.0 / (0.04 - sum( log(l_cur) )), 0 );
     v_cur = rtgamma( 1.0, R_PosInf, T + 0.08, (0.04 - sum( log(l_cur) )), 0 );
     l_cur = l_gibbs( v_cur, y_T, h_cur, b_cur, T );
     
