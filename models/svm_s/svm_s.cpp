@@ -36,6 +36,24 @@ double right_tgamma(double max, double shape, double rate){
   
 }
 
+double left_tgamma( double min, double shape, double rate ){
+  
+  double scale = 1 / rate;
+  
+  if( min <= 0 )
+    stop( "argumnto min tem que ser positivo!" );
+  
+  double ltg, q;
+  
+  double u = R::runif( 0, 1 );
+  q = R::pgamma( min, shape, scale, true, false );
+  q += u * R::pgamma( min, shape, scale, false, false );
+  
+  ltg = R::qgamma( q, shape, scale, true, false );
+  
+  return ltg;
+}
+
 double qtrunc( double p, double a, double b, double shape, double scale, int msn_erro ){
   
   // G <- get(paste("p", spec, sep = ""), mode = "function")
