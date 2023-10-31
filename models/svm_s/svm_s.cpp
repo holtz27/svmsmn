@@ -216,7 +216,8 @@ List svm_s(int N,
     theta_cur = rmhmc_theta( theta_cur, h_cur, 5, L_theta, eps_theta, T, acc_theta );
     b_cur = rmhmc_b( b_cur, h_cur, l_cur, 5, L_b, eps_b, T, y_T , acc_b );
     h_cur = hmc_h( h_cur, theta_cur, b_cur, l_cur, L_h, eps_h, T, y_T, acc_h );
-    v_cur = rtgamma( 1.0, R_PosInf, T + 0.08, (0.04 - sum( log(l_cur) )), 0 );
+    //v_cur = rtgamma( 1.0, R_PosInf, T + 0.08, (0.04 - sum( log(l_cur) )), 0 );
+    v_cur = left_tgamma( 1.0, T + 0.08, 0.04 - sum( log(l_cur) ) );
     l_cur = l_gibbs( v_cur, y_T, h_cur, b_cur, T );
     
     // chain update 
