@@ -66,7 +66,7 @@ abs_plots = function( draws_h, burn = 0, lags = 1, dates = NULL, y ){
 tail_plot = function(draws_l, burn = 0, lags = 1, dates = NULL, model_name){
   if( !require(ggplot2) ) install.packages("ggplot2")
   library(ggplot2)
-  if( !require(latex2exp) ) install.packages("latex2exp")
+  if( !require(latex2exp) ) install.packages('latex2exp', repos='http://cran.us.r-project.org', dependencies = TRUE)
   library(latex2exp)
   
   Draws_l = draws_l[, -1]
