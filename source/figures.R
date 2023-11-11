@@ -21,8 +21,10 @@ trace_plots = function(draws, burn = 0, lags = 1, names, lag.max = 100){
          main ='', xlab = '', ylab = 'ACF', 
          cex.lab = 1.3, 
          cex.axis = 1.5)
-    plot(density( Draws[i, ] ), main ='', xlab = '', ylab = '', 
-         cex.axis = 1.5)
+    hist( Draws[i, ], breaks = 20, freq = FALSE, col = 'white',
+          main = '', xlab = '', ylab = '',
+          cex.axis = 1.5 )
+    #plot(density( Draws[i, ] ), main ='', xlab = '', ylab = '', cex.axis = 1.5)
   }
   
   par(mfrow = c(1,1))
