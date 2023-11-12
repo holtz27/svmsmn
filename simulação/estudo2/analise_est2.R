@@ -2,22 +2,37 @@
 load("~/Documentos/svm_smn/svm_t/estudo2/es2_t.RData")
 #load("~/Documentos/svm_smn/svm_vg/estudo2/es2_vg.RData")
 
-x1 = x2 = 0
+# Ess médio
+hmc_ess = apply( Data$hmc_eff, MARGIN = 1, mean ) 
+rmhmc_ess = apply( Data$rmhmc_eff, MARGIN = 1, mean ) 
+
+# SD
+hmc_sd = apply( Data$hmc_eff, MARGIN = 1, sd )  
+rmhmc_sd = apply( Data$rmhmc_eff, MARGIN = 1, sd )  
+
+# ess_min
+ess_min_hmc = ess_min_rmhmc = 0
 T = length( Data$hmc_times )
 
 for( t in 1:T ){
-  x1 = x1 + Data$hmc_eff[, t] / Data$hmc_times[ t ]
-  x2 = x2 + Data$rmhmc_eff[, t] / Data$rmhmc_times[ t ]
+  ess_min_hmc = ess_min_hmc + 60 * Data$hmc_eff[, t] / Data$hmc_times[ t ]
+  ess_min_rmhmc = ess_min_rmhmc + 60 * Data$rmhmc_eff[, t] / Data$rmhmc_times[ t ]
 }
 
-x1 = x1 / t
-x2 = x2 / t
+ess_min_hmc = ess_min_hmc / T
+ess_min_rmhmc = ess_min_rmhmc / T
 
-data = matrix( c(x1, x2), ncol = 2 )
+data = NULL
+data = matrix( c(hmc_ess, rmhmc_ess), ncol = 2 )
 data = data.frame( data )
+colnames( data ) = c( 'ess_hmc', 'ess_rmhmc' )
+
+data = rbind( data, matrix( c(hmc_sd, rmhmc_sd), ncol = 2 ) )
+data = data.frame( data )
+colnames( data ) = c( 'sd_hmc', 'sd_rmhmc' )
+
+data = round( data, 2 )
 row.names( data ) = c( 'mu', 'phi', 'sigma', 'b0', 'b1', 'b2', 'v' )
-colnames( data ) = c( 'hmc', 'rmhmc' )
-data = round( data, 3 )
 data
 
 # boxplot
