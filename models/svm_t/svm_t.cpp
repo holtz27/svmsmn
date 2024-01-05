@@ -1,6 +1,6 @@
 // [[Rcpp::depends( RcppArmadillo )]]
 
-#include "svm_smn_t.h"
+#include "svm_smn.h"
 
 // ############################## set seed function
 void set_seed( int seed ){
@@ -11,8 +11,8 @@ void set_seed( int seed ){
 
 // [[Rcpp::export]]
 List svm_t(int N, 
-           int L_theta, vec eps_theta, 
-           int L_b, vec eps_b, 
+           int L_theta, double eps_theta, 
+           int L_b, double eps_b, 
            int L_h, double eps_h, 
            int L_v, double eps_v, double alpha, double li, double ls,
            vec y_T, 
@@ -49,7 +49,7 @@ List svm_t(int N,
   
   // iniciando v
   int acc_v = 0, div_v = 0;
-  double v_cur = 5;
+  double v_cur = 10.0;
     
   // iniciando l
   vec l_cur = zeros<vec>(T, 1);
@@ -82,8 +82,8 @@ List svm_t(int N,
     theta_cur = rmhmc_theta( theta_cur, h_cur, 5, L_theta, eps_theta, T, acc_theta );
     b_cur = rmhmc_b( b_cur, h_cur, l_cur, 5, L_b, eps_b, T, y_T , acc_b );
     h_cur = hmc_h( h_cur, theta_cur, b_cur, l_cur, L_h, eps_h, T, y_T, acc_h );
-    v_cur = rmhmc_v(v_cur, l_cur, 5, L_v, eps_v, T, acc_v, alpha, li, ls );
-    l_cur = l_gibbs(v_cur, y_T, h_cur, b_cur, T, alpha, li, ls );
+    v_cur = rmhmc_v_t(v_cur, l_cur, 5, L_v, eps_v, T, acc_v, alpha, li, ls );
+    l_cur = l_gibbs_t(v_cur, y_T, h_cur, b_cur, T, alpha, li, ls );
     
     // chain update 
     chain_theta.col( it ) += theta_cur;
