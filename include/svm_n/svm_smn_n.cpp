@@ -1,4 +1,4 @@
-#include "svmn.h"
+#include "svm_smn_n.h"
 
 // parameters priori
 double mu_0 = 0.0, s_0 = 3.2;
@@ -517,3 +517,4 @@ vec hmc_h(vec h_cur, vec theta, vec b, int L, double eps, int T, vec y_T, int &a
 
     return vH;
 }
+
