@@ -1,5 +1,5 @@
-#ifndef SVM_SMN_N_H_INCLUDED
-#define SVM_SMN_N_H_INCLUDED
+#ifndef SVMN_H_INCLUDED
+#define SVMN_H_INCLUDED
 
 #include <RcppArmadillo.h>
 using namespace Rcpp;
@@ -39,4 +39,5 @@ vec glogpost_h(vec h, vec theta, vec b, int T, vec y_T);
 // hmc update
 vec hmc_h(vec h_cur, vec theta, vec b, int L, double eps, int T, vec y_T, int &acc);
 
-#endif // SVM_SMN_N_H_INCLUDED
+#endif // SVMN_H_INCLUDED
+
