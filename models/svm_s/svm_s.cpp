@@ -1,6 +1,6 @@
 // [[Rcpp::depends( RcppArmadillo )]]
 
-#include "svm_smn_t.h"
+#include "svm_smn.h"
 
 //#############################################################################
 //########################## rtgamma
@@ -77,8 +77,8 @@ void set_seed( int seed ){
 }
 // [[Rcpp::export]]
 List svm_s(int N, 
-           int L_theta, vec eps_theta, 
-           int L_b, vec eps_b, 
+           int L_theta, double eps_theta, 
+           int L_b, double eps_b, 
            int L_h, double eps_h,
            vec y_T, 
            int seed ){
