@@ -1,6 +1,6 @@
 // [[Rcpp::depends( RcppArmadillo )]]
 
-#include "svmn.h"
+#include "svm_smn_n.h"
 
 // ############################## set seed function
 void set_seed(int seed){
@@ -10,7 +10,7 @@ void set_seed(int seed){
 }
 
 // [[Rcpp::export]]
-List svmn(int N, 
+List svm_n(int N, 
            int L_theta, double eps_theta,
            int L_b, double eps_b, 
            int L_h, double eps_h,
@@ -28,24 +28,24 @@ List svmn(int N,
   // starting theta
   int acc_theta = 0;
   vec theta_cur = zeros<vec>(3, 1);
-  theta_cur[ 0 ] += 0.005;
+  theta_cur[ 0 ] += 0.1;
   theta_cur[ 1 ] += 0.5 * ( log( 1 + 0.98 ) - log( 1 - 0.98 ) );
-  theta_cur[ 2 ] += log( sqrt( 0.017 ) );
+  theta_cur[ 2 ] += log( 0.15 );
   
   // starting h
   int acc_b = 0;
   vec h_cur = zeros<vec>(T, 1);
-  h_cur[ 0 ] += 0.005 + sqrt( 0.03 ) / (1 - 0.95 * 0.95 ) * randn();
+  h_cur[ 0 ] += 0.1 + 0.15 / sqrt(1 - 0.98 * 0.98 ) * randn();
   for( int kt = 1 ; kt < T ; kt++ ){
-    h_cur[ kt ] += 0.005 + 0.95 * ( h_cur[ kt - 1 ] -0.005 ) + sqrt( 0.03 ) * randn();
+    h_cur[ kt ] += 0.1 + 0.98 * ( h_cur[ kt - 1 ] - 0.1 ) + 0.15 * randn();
   }
   
   // starting b
   int acc_h = 0;
   vec b_cur = zeros<vec>(3, 1);
-  b_cur[ 0 ] += 0.3;
+  b_cur[ 0 ] += 0.1;
   b_cur[ 1 ] += 0.5 * ( log( 1 + 0.03 ) - log( 1 - 0.03 ) );
-  b_cur[ 2 ] += -0.025;
+  b_cur[ 2 ] += -0.1;
   
   // starting cadeia
   mat chain_theta = zeros<mat>( 3, N + 1 );
@@ -95,3 +95,4 @@ List svmn(int N,
                       ); 
   
 }
+
