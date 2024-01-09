@@ -1,9 +1,7 @@
-
-
 # Gás Natural
 #Banco coletado em: 
 #https://br.investing.com/
-gas = read.csv('gas.csv', dec = ',')
+gas = read.csv('https://raw.githubusercontent.com/holtz27/svmsmn/main/aplica%C3%A7%C3%A3o/gas/gas.csv', dec = ',')
 gas = gas[, c('Data', 'Último')]
 #gas[, 2] = stringr::str_remove(gas[, 2], "[.]")
 #gas[, 2] = stringr::str_replace(gas[, 2], "[,]", ".")
@@ -42,9 +40,3 @@ data_summary = matrix(c( mean( log.ret ),
                          moments::kurtosis( log.ret ) ), nrow = 1)
 colnames( data_summary ) = c( 'mean', 'sd', 'min', 'max', 'skewness', 'kurtosis')
 round( data_summary, digits = 4 )
-
-Box.test(log.ret, lag = 12, type = 'Ljung-Box')
-Box.test(log.ret**2, lag = 12, type = 'Ljung-Box')
-acf(log.ret, lag.max = 5, plot = FALSE)
-
-
