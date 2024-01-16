@@ -1,5 +1,4 @@
-#microsoft = read.csv('https://raw.githubusercontent.com/holtz27/svmsmn/main/aplica%C3%A7%C3%A3o/cambio/gbp_usd.csv')
-microsoft = read.csv('microsoft.csv')
+microsoft = read.csv('https://raw.githubusercontent.com/holtz27/svmsmn/main/aplica%C3%A7%C3%A3o/microsoft/microsoft.csv')
 microsoft = microsoft[, c('Date', 'Adj.Close')]
 microsoft[, 2] = as.numeric( microsoft[, 2] ) 
 microsoft = na.omit( microsoft )
