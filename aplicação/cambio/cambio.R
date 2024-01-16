@@ -1,6 +1,5 @@
 
-
-cambio = read.csv('eurusd.csv')
+cambio = read.csv('https://raw.githubusercontent.com/holtz27/svmsmn/main/aplica%C3%A7%C3%A3o/cambio/gbp_usd.csv')
 cambio = cambio[, c('Date', 'Adj.Close')]
 cambio[, 2] = as.numeric( cambio[, 2] ) 
 cambio = na.omit( cambio )
