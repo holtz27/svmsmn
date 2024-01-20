@@ -1,6 +1,4 @@
-
-#apple = read.csv('https://raw.githubusercontent.com/holtz27/svmsmn/main/aplica%C3%A7%C3%A3o/apple/apple.csv')
-apple = read.csv('apple.csv')
+apple = read.csv('https://raw.githubusercontent.com/holtz27/svmsmn/main/aplica%C3%A7%C3%A3o/apple/apple.csv')
 apple = apple[, c('Date', 'Adj.Close')]
 apple[, 2] = as.numeric( apple[, 2] ) 
 apple = na.omit( apple )
