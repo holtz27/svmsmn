@@ -6,7 +6,7 @@ dates = as.Date( apple[, 1], "%Y-%m-%d" )
 View(apple)
 T = nrow(apple)
 log.ret = 100 * ( log( apple[2:T, 2] ) - log( apple[1:(T-1), 2] ) )
-
+T = length( log.ret )
 # Plots
 library(ggplot2)
 df = data.frame( Retorno = log.ret, Tempo = dates[-1] )
