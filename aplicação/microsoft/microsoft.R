@@ -6,7 +6,7 @@ dates = as.Date( microsoft[, 1], "%Y-%m-%d" )
 #View(microsoft)
 T = nrow(microsoft)
 log.ret = 100 * ( log( microsoft[2:T, 2] ) - log( microsoft[1:(T-1), 2] ) )
-
+T = length( log.ret )
 # Plots
 library(ggplot2)
 df = data.frame( Retorno = log.ret, Tempo = dates[-1] )
