@@ -17,7 +17,7 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits, hdp = FALSE )
                     FUN = sd) / sqrt( N_eff )
   theta_hat = apply( chain, MARGIN = 2, FUN = mean )
   theta_sd  = apply( chain, MARGIN = 2, FUN = sd )
-  
+  theta_median = = apply( chain, MARGIN = 2, FUN = median )
   if( hdp ){
     i = coda::HPDinterval( chain )
     theta_min = i[, 1]
@@ -31,6 +31,7 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits, hdp = FALSE )
     c(theta_hat,
       theta_sd,
       theta_min,
+      theta_median,
       theta_max,
       CD$z,
       IF,
@@ -39,9 +40,9 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits, hdp = FALSE )
     )
   row.names( data ) = names
   if( hdp ){
-    colnames( data ) = c( 'media', 'sd', 'HPD.min', 'HPD.max', 'CD', 'IF', 'n_eff', 'MC erro')
+    colnames( data ) = c( 'media', 'sd', 'HPD.min', '50%','HPD.max', 'CD', 'IF', 'n_eff', 'MC erro')
   }else{
-    colnames( data ) = c( 'media', 'sd', '2.5%', '97.5%', 'CD', 'IF', 'n_eff', 'MC erro')
+    colnames( data ) = c( 'media', 'sd', '2.5%', '50%,'97.5%', 'CD', 'IF', 'n_eff', 'MC erro')
   }
   
   return( round( data, digits ) )
