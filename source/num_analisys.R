@@ -42,7 +42,7 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits, hdp = FALSE )
   if( hdp ){
     colnames( data ) = c( 'media', 'sd', 'HPD.min', '50%','HPD.max', 'CD', 'IF', 'n_eff', 'MC erro')
   }else{
-    colnames( data ) = c( 'media', 'sd', '2.5%', '50%,'97.5%', 'CD', 'IF', 'n_eff', 'MC erro')
+    colnames( data ) = c( 'media', 'sd', '2.5%', '50%','97.5%', 'CD', 'IF', 'n_eff', 'MC erro')
   }
   
   return( round( data, digits ) )
