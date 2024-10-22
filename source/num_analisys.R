@@ -17,7 +17,7 @@ num_analisys = function( draws, burn = 0, lags = 1, names, digits, hdp = FALSE )
                     FUN = sd) / sqrt( N_eff )
   theta_hat = apply( chain, MARGIN = 2, FUN = mean )
   theta_sd  = apply( chain, MARGIN = 2, FUN = sd )
-  theta_median = = apply( chain, MARGIN = 2, FUN = median )
+  theta_median = apply( chain, MARGIN = 2, FUN = median )
   if( hdp ){
     i = coda::HPDinterval( chain )
     theta_min = i[, 1]
