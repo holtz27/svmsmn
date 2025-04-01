@@ -24,11 +24,11 @@ trace_plots = function(draws, burn = 0, lags = 1, names, lag.max = 100){
     hist( Draws[i, ], breaks = 20, freq = FALSE, col = 'white',
           main = '', xlab = '', ylab = '',
           cex.axis = 1.5 )
-    #lines(density(Draws[i, ] ))
+    lines(density(Draws[i, ]))
   }
-  
   par(mfrow = c(1,1))
 }
+
 
 abs_plots = function( draws_h, burn = 0, lags = 1, dates = NULL, y ){
   if( !require(ggplot2) ) install.packages("ggplot2")
